@@ -1,0 +1,18 @@
+|< a
+<= 50 # can be any number
+|< b
+<= 10 # can be any positive number
+|< c
+<= 0
+
+[<] /while b is not 0/
+|< c
+{%}
++ a
+|< b
+- 1
+?
+[>] /while b is not 0/
+
+|< c
+{%}

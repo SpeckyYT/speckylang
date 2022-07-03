@@ -1,0 +1,29 @@
+# define
+|< a
+<= 10
+|< b
+<= 20
+
+# increment/decrement
+|< a
++ 1
+|< b
+- 1
+
+# if a is not 0
+|< a
+?
+    {%}
+?
+    <= 0
+
+# if b is not 1
+|< /b is not 1/
+<= b
+>< 1
+?
+    |< b
+
+
+= b
+
