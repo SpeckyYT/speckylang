@@ -1,0 +1,8 @@
+|< /hello world/
+<= 10000 # any number equal or above 1
+
+[<] loop
+{@}
+- 1
+?
+    [>] loop

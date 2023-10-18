@@ -1,0 +1,29 @@
+|< times
+<= 10000 # fibonacci steps you want (bigger or equal 1)
+- 1   # for adjusting the index
+
+|< a
+<= 0
+{%}
+|< b
+<= 1
+{%}
+
+[<] loop
+
+|< new
+<= 0
++ §a
++ §b
+
+|< a
+<= §b
+|< b
+<= §new
+
+{%}
+
+|< times
+- 1
+?
+    [>] loop

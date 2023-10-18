@@ -1,0 +1,17 @@
+|< number
+<= 10
+
+|< product
+<= 1 # only 1
+
+[<] repeat
+|< product
+* number
+|< number
+- 1
+
+?
+  [>] repeat
+
+|< product
+{%}

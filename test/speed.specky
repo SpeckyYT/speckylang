@@ -1,0 +1,7 @@
+|<loop_count<=100000
+
+[<]/loop/
+|<§§loop_count
+<=§loop_count
+|<loop_count<=§loop_count - 1 ?
+[>] /loop/

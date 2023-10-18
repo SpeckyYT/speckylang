@@ -1,122 +1,34 @@
 use logos::{Logos, Source};
 
 use crate::ast;
+use crate::tokens::Token;
 
-#[derive(Logos, Debug, PartialEq)]
-enum Token {
-    // <operator> <value>
-    #[token("|<")]
-    Load,
-    #[token("[<]")]
-    Define,
-    #[token("[>]")]
-    Jump,
-    #[token("<=")]
-    Assign,
-    #[token("=>")]
-    Overwrite,
-    #[token("<=>")]
-    Swap,
-
-    // <operator> <value>
-    #[token("&")]
-    And,
-    #[token("|")]
-    Or,
-    #[token(">-<")]
-    Xor,
-    #[token("+")]
-    Plus,
-    #[token("-")]
-    Minus,
-    #[token("*")]
-    Times,
-    #[token("/")]
-    Divide,
-    #[token("%")]
-    Modulo,
-    #[token("^")]
-    Exponential,
-    #[token("><")]
-    Unequal,
-    #[token("=")]
-    Equal,
-    #[token("<")]
-    LessThan,
-    #[token("=<")]
-    LessThanOrEqual,
-    #[token(">")]
-    GreaterThan,
-    #[token(">=")]
-    GreaterThanOrEqual,
-
-    // if statements
-    // <operator>
-    #[token("?")]
-    Truthy,
-    #[token("!")]
-    Falsy,
-    #[token("??")]
-    Exists,
-    #[token("!!")]
-    Empty,
-
-    // <operator>
-    #[token("{%}")]
-    LogValue,
-    #[token("{@}")]
-    LogCurrentAddress,
-
-    // symbol
-    #[regex("[a-zA-Z_][a-zA-Z0-9_]*")]
-    Symbol,
-
-    // value
-    #[token("null")]
-    Null,
-    #[token("true")]
-    True,
-    #[token("false")]
-    False,
-    #[regex(r"/(?:\.|[^\\/])*/")]
-    StringLiteral,
-    #[regex(r"-?[0-9]+(\.[0-9]+)?")]
-    NumberLiteral,
-
-    #[regex(r"\n")]
-    Newline,
-
-    #[error]
-    #[regex(r"[ \t\n]*|(#[^\n]*\n)", logos::skip)]
-    Error,
-}
-
-pub fn parse_script(
-    mut unparsed: String,
-) -> ast::Program {
-    unparsed = unparsed.replace("\r\n", "\n");
-
+pub fn parse_script(unparsed: String) -> ast::Program {
     let mut lexer = Token::lexer(&unparsed);
 
-    let mut program = ast::Program::new();
+    let mut program = ast::Program::default();
 
-    while let Some(token) = lexer.next() {
+    while let Some(Ok(token)) = lexer.next() {
         use Token::*;
 
         match token {
             // <operator> <symbol/value>
             Load|Define|Jump|Assign|Overwrite|Swap|And|Or|Plus|Minus|Times|Divide|Modulo|Exponential
             |Unequal|Equal|LessThan|LessThanOrEqual|GreaterThan|GreaterThanOrEqual => { // if statements
-                let next = lexer.next();
+                let mut next = lexer.next();
                 if next.is_none() {
                     panic!("expected value, found EOF");
                 }
-                let value = match next.as_ref().unwrap() {
-                    Null|True|False|StringLiteral|NumberLiteral|Symbol => {
-                        token_to_value(next.unwrap(), lexer.slice())
-                    },
-                    Newline => {
-                        panic!("sussy");
+
+                let mut reader = 0;
+                while let Some(Ok(Reader)) = next {
+                    reader += 1;
+                    next = lexer.next()
+                }
+
+                let value = match next.as_ref().unwrap().as_ref().unwrap() {
+                    Null|True|False|StringLiteral|IntegerLiteral|Symbol => {
+                        token_to_value(next.unwrap().unwrap(), lexer.slice())
                     },
                     _ => {
                         panic!("sussy");
@@ -126,6 +38,7 @@ pub fn parse_script(
                 program.push(
                     ast::Operation::Dual(
                         token_to_operator(token),
+                        reader,
                         value,
                     )
                 );
@@ -139,7 +52,6 @@ pub fn parse_script(
                     )
                 );
             },
-            Newline => (),
             _ => panic!("Unexpected stuff: {:?}", token),
         }
     }
@@ -191,7 +103,7 @@ fn token_to_value(token: Token, content: &str) -> ast::Value {
         True => ast::Value::Boolean(true),
         False => ast::Value::Boolean(false),
         StringLiteral => ast::Value::String(content.slice(1..(content.len()-1)).unwrap().to_string()),
-        NumberLiteral => ast::Value::Number(content.parse::<ast::Number>().unwrap()),
+        IntegerLiteral => ast::Value::Integer(content.parse::<ast::Integer>().unwrap()),
         _ => panic!("is not value"),
     }
 }

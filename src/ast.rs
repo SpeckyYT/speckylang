@@ -1,8 +1,9 @@
 use std::fmt::Debug;
+use num_bigint::BigInt;
 
-pub type Number = i128;
+pub type Integer = BigInt;
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum Operator {
     Load,
     Define,
@@ -37,14 +38,14 @@ pub enum Operator {
 pub enum Value {
     Symbol(String),
     Boolean(bool),
-    Number(Number),
+    Integer(Integer),
     String(String),
     Null,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Operation {
-    Dual(Operator, Value),
+    Dual(Operator, u8, Value),
     Mono(Operator),
 }
 
