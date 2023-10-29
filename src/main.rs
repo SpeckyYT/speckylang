@@ -2,7 +2,7 @@ use std::{fs, path::PathBuf, time::{Duration, Instant}};
 use clap::Parser;
 
 mod ast;
-mod tokens;
+mod token;
 mod parser;
 mod run;
 
@@ -22,10 +22,10 @@ fn main() {
 
     let test = fs::read_to_string(args.file).unwrap();
 
-    let parsed = parse(test);
+    let parsed = parse(&test);
 
     match args.benchmark {
-        false => run(parsed),
+        false => run(&parsed),
         true => {
             let mut min = Duration::MAX;
             let mut max = Duration::ZERO;
@@ -41,7 +41,7 @@ fn main() {
                 let operations = parsed.clone();
 
                 let begin = Instant::now();
-                run(operations);
+                run(&operations);
                 let taken = begin.elapsed();
 
                 min = min.min(taken);
@@ -58,11 +58,12 @@ fn main() {
 }
 
 #[elapsed_time::elapsed]
-fn parse(code: String) -> Vec<ast::Operation> {
-    parser::parse_script(code)
+fn parse(code: &str) -> Vec<ast::Statement> {
+    let mut parser = parser::Parser::new(code);
+    parser.parse_statements().unwrap()
 }
 
 #[elapsed_time::elapsed]
-fn run(parsed: Vec<ast::Operation>) {
+fn run(parsed: &Vec<ast::Statement>) {
     run::run(parsed);
 }

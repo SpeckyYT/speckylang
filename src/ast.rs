@@ -1,38 +1,6 @@
-use std::fmt::Debug;
 use num_bigint::BigInt;
 
 pub type Integer = BigInt;
-
-#[derive(Debug, Clone, Copy)]
-pub enum Operator {
-    Load,
-    Define,
-    Jump,
-    Assign,
-    Overwrite,
-    Swap,
-    And,
-    Or,
-    Xor,
-    Plus,
-    Minus,
-    Times,
-    Divide,
-    Modulo,
-    Exponential,
-    Unequal,
-    Equal,
-    LessThan,
-    LessThanOrEqual,
-    GreaterThan,
-    GreaterThanOrEqual,
-    Truthy,
-    Falsy,
-    Exists,
-    Empty,
-    LogValue,
-    LogCurrentAddress,
-}
 
 #[derive(Debug, Hash, PartialEq, Eq, Clone)]
 pub enum Value {
@@ -40,13 +8,49 @@ pub enum Value {
     Boolean(bool),
     Integer(Integer),
     String(String),
+    Time,               // the parser doesn't need to know the time
     Null,
 }
 
 #[derive(Debug, Clone)]
-pub enum Operation {
-    Dual(Operator, u8, Value),
-    Mono(Operator),
+pub struct Expression {
+    pub reader: usize,
+    pub value: Value,
+} 
+
+#[derive(Debug, Clone)]
+pub enum Statement {
+    Load(Expression),
+    Define(Expression),  // address definition
+    Jump(Expression),    // jump to address
+    Assign(Expression),
+    Overwrite(Expression),
+    Swap(Expression),
+
+    And(Expression),
+    Or(Expression),
+    Xor(Expression),
+    Plus(Expression),
+    Minus(Expression),
+    Times(Expression),
+    Divide(Expression),
+    Modulo(Expression),
+    Exponential(Expression),
+
+    Unequal(Expression),
+    Equal(Expression),
+    LessThan(Expression),
+    LessThanOrEqual(Expression),
+    GreaterThan(Expression),
+    GreaterThanOrEqual(Expression),
+
+    Truthy,
+    Falsy,
+    Exists,
+    Empty,
+
+    LogValue,
+    LogCurrentAddress,
 }
 
-pub type Program = Vec<Operation>;
+pub type Statements = Vec<Statement>;

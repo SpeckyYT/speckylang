@@ -2,7 +2,7 @@
 |< a
 <= 10
 |< b
-<= 20
+<= 20 # positive
 
 # increment/decrement
 |< a
@@ -18,12 +18,15 @@
     <= 0
 
 # if b is not 1
-|< /b is not 1/
+|< b_temp
+<= §b
+- 1
+|< §b_temp
 <= b
->< 1
-?
-    |< b
+|< b_temp
 
+!
+    {%} # should actually print b instead of b - 1
 
-= b
-
+[<] /while b is not 0/
+|< b

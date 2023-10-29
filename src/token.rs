@@ -1,6 +1,6 @@
 use logos::Logos;
 
-#[derive(Logos, Debug, PartialEq)]
+#[derive(Logos, Debug, PartialEq, Clone, Copy)]
 pub enum Token {
     // <operator> <value>
     #[token("|<")]
@@ -80,9 +80,11 @@ pub enum Token {
     True,
     #[token("false")]
     False,
+    #[token("µ")]
+    Time,
     #[regex(r"/(?:\.|[^\\/])*/")]
     StringLiteral,
-    #[regex(r"-?[0-9]+")]
+    #[regex(r"[0-9]+")]
     IntegerLiteral,
 
     #[regex(r"[ \t\n]*|(#[^\n]*\n)", logos::skip)]
