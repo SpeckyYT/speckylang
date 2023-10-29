@@ -1,3 +1,5 @@
+use std::time::Instant;
+
 use num_bigint::BigInt;
 
 use crate::{ast, token::Token};
@@ -31,7 +33,7 @@ impl<'a> Parser<'a> {
 
             Some(Token::Time) => {
                 self.next()?;
-                Ok(ast::Value::Time)
+                Ok(ast::Value::Time(Instant::now()))
             }
 
             Some(Token::Null) => {

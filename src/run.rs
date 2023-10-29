@@ -1,3 +1,5 @@
+use std::time::Instant;
+
 use fnv::FnvHashMap;
 
 type SpeckyDataContainer<V> = FnvHashMap<ast::Value, V>;
@@ -76,7 +78,13 @@ pub fn run(parsed: &ast::Statements) -> RunOutput {
                 }
             },
             Assign(expr) => {
-                variables.insert(current_address.clone(), operand!().clone());
+                variables.insert(
+                    current_address.clone(),
+                    match operand!().clone() {
+                        ast::Value::Time(_) => ast::Value::Time(Instant::now()),
+                        rest => rest,
+                    }
+                );
             },
             Overwrite(expr) => {
                 variables.insert(operand!().clone(), current_address.clone());
@@ -266,7 +274,7 @@ fn value_to_string(value: &ast::Value) -> String {
         Boolean(b) => b.to_string(),
         Integer(i) => i.to_string(),
         String(s) => format!("/{}/", s.replace('/', r"\/")),
-        Time => format!("{:?}", "<insert time here>" /*d.elapsed()*/),
+        Time(d) => format!("{:?}", d.elapsed()),
         Null => "null".to_string(),
     }
 }
@@ -278,7 +286,7 @@ fn value_is_truthy(value: &ast::Value) -> bool {
         Boolean(b) => *b,
         Integer(n) => *n != crate::ast::Integer::from(0),
         String(s) => !s.is_empty(),
-        Time => true,
+        Time(_) => true,
         Null => false,
     }
 }

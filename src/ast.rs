@@ -1,3 +1,5 @@
+use std::time::Instant;
+
 use num_bigint::BigInt;
 
 pub type Integer = BigInt;
@@ -8,7 +10,7 @@ pub enum Value {
     Boolean(bool),
     Integer(Integer),
     String(String),
-    Time,               // the parser doesn't need to know the time
+    Time(Instant),
     Null,
 }
 
