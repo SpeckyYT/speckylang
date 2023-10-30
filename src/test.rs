@@ -39,8 +39,6 @@ fn bottles_of_beer() {
         ].join("\n"))
         .collect::<String>();
 
-    println!("{}", expected);
-
     assert!(
         output.stdout.contains(&expected)
     )
@@ -64,3 +62,19 @@ fn multi_machine() {
 
     assert_eq!(output.stdout, (A * B).to_string() + "\n");
 }
+
+#[test]
+fn print_test() {
+    // let output = run!("|< ab {@}");
+    // assert_eq!(output.stdout, "ab\n");
+
+    // let output = run!("|< ab {~@}");
+    // assert_eq!(output.stdout, "ba\n");
+
+    // let output = run!("|< ab {@#}");
+    // assert_eq!(output.stdout, "ab");
+
+    // let output = run!("|< ab {~@#}");
+    // assert_eq!(output.stdout, "ba");
+}
+

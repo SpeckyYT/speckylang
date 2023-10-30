@@ -59,11 +59,18 @@ pub enum Token {
     #[token("!!")]
     Empty,
 
-    // <operator>
-    #[token("{%}")]
-    LogValue,
-    #[token("{@}")]
-    LogCurrentAddress,
+    // {}
+    #[token("{")]
+    CurlyBracketOpen,
+    #[token("}")]
+    CurlyBracketClose,
+
+    #[token("@")]
+    At,
+    #[token("#")]
+    Octothorpe,
+    #[token("~")]
+    Tilde,
 
     // <operator> <unaryoperator> <value>
     #[token("§")]

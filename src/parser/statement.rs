@@ -7,13 +7,27 @@ impl<'a> Parser<'a> {
         let token = self.next()?;
 
         macro_rules! match_operation {
-            ($($token_name:ident => $operation:ident $(($($details:ident)?))?,)*) => {
+            (
+                $(
+                    $token_name:ident =>
+                        $($operation:ident ($($details:ident)?))?,
+                )*
+                $(
+                    #
+                    $(
+                        $arbitrary:ident => $code:tt,
+                    )*
+                )?
+            ) => {
                 match token {
                     $(
                         Token::$token_name => $(
                             match_operation!(# $operation $($details)?)
                         )?,
                     )*
+                    $($(
+                        Token::$arbitrary => $code,
+                    )*)?
                     _ => Err(ParsingError::UnexpectedOperator),
                 }
             };
@@ -54,9 +68,39 @@ impl<'a> Parser<'a> {
             Falsy => Falsy(),
             Exists => Exists(),
             Empty => Empty(),
-        
-            LogValue => LogValue(),
-            LogCurrentAddress => LogCurrentAddress(),
+
+            #
+
+            CurlyBracketOpen => {
+                let mut kind = None;
+                let mut reverse = false;
+                let mut newline = true;
+
+                loop {
+                    let token = self.next()?;
+                    println!("{:?}", token);
+                    match token {
+                        Token::Modulo => kind = Some(ast::LogKind::Value),
+                        Token::At => kind = Some(ast::LogKind::Pointer),
+                        Token::Tilde => reverse = !reverse,
+                        Token::Octothorpe => newline = !newline,
+                        Token::CurlyBracketClose => {
+                            println!("break");
+                            break
+                        },
+                        _ => return Err(ParsingError::InvalidCharacter)
+                    }
+                }
+
+                println!("{}", newline);
+
+                let kind = match kind {
+                    Some(kind) => kind,
+                    None => return Err(ParsingError::InvalidCharacter),
+                };
+
+                Ok(ast::Statement::Log { kind, reverse, newline })
+            },
         )
     }
     pub fn parse_statements(&mut self) -> ParseResult<ast::Statements> {

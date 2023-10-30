@@ -15,7 +15,7 @@ pub struct RunOutput {
 pub fn run(parsed: &ast::Statements) -> RunOutput {
     let mut variables: SpeckyDataContainer<ast::Value> = SpeckyDataContainer::default();
     let mut jump_stack: SpeckyDataContainer<usize> = SpeckyDataContainer::default();
-    let mut current_address: ast::Value = ast::Value::Null;
+    let mut current_pointer: ast::Value = ast::Value::Null;
 
     let mut line_index = 0;
 
@@ -25,11 +25,10 @@ pub fn run(parsed: &ast::Statements) -> RunOutput {
         if line_index >= parsed.len() { break; }
 
         macro_rules! match_statement {
-            {$($statement:ident $(($expr:ident))? => $code:tt $(,)?)*} => {
+            { $($statement:ident $($expr:tt)? => $code:tt $(,)?)* } => {
                 match &parsed[line_index] {
                     $(
-                        Statement::$statement $(($expr))? => {
-
+                        match_statement!(@pat $statement $($expr)?) => {
                             $(
                                 #[allow(unused_macros)]
                                 macro_rules! operand {
@@ -48,13 +47,13 @@ pub fn run(parsed: &ast::Statements) -> RunOutput {
                             #[allow(unused_macros)]
                             macro_rules! left_right_operator {
                                 ($callback:expr) => {
-                                    let left = variables.get(&current_address).unwrap_or(&ast::Value::Null).clone();
+                                    let left = variables.get(&current_pointer).unwrap_or(&ast::Value::Null).clone();
                                     let right = match operand!() {
                                         ast::Value::Symbol(_) => variables.get(operand!()).unwrap_or(&ast::Value::Null).clone(),
                                         _ => operand!().clone(),
                                     };
                                     let result = $callback(left, right);
-                                    variables.insert(current_address.clone(), result);
+                                    variables.insert(current_pointer.clone(), result);
                                 }
                             }
 
@@ -63,11 +62,13 @@ pub fn run(parsed: &ast::Statements) -> RunOutput {
                     )*
                 }
             };
+            (@pat $ident:ident $(())?) => { Statement::$ident };
+            (@pat $ident:ident $expr:tt) => { Statement::$ident $expr };
         }
 
-        match_statement!{
+        match_statement! {
             Load(expr) => {
-                current_address = operand!().clone();
+                current_pointer = operand!().clone();
             },
             Define(expr) => {
                 jump_stack.insert(operand!().clone(), line_index);
@@ -79,7 +80,7 @@ pub fn run(parsed: &ast::Statements) -> RunOutput {
             },
             Assign(expr) => {
                 variables.insert(
-                    current_address.clone(),
+                    current_pointer.clone(),
                     match operand!().clone() {
                         ast::Value::Time(_) => ast::Value::Time(Instant::now()),
                         rest => rest,
@@ -87,11 +88,11 @@ pub fn run(parsed: &ast::Statements) -> RunOutput {
                 );
             },
             Overwrite(expr) => {
-                variables.insert(operand!().clone(), current_address.clone());
+                variables.insert(operand!().clone(), current_pointer.clone());
             },
             Swap(expr) => {
-                let temp = variables.get(&current_address).unwrap_or(&ast::Value::Null).clone();
-                variables.insert(current_address.clone(), variables.get(operand!()).unwrap_or(&ast::Value::Null).clone());
+                let temp = variables.get(&current_pointer).unwrap_or(&ast::Value::Null).clone();
+                variables.insert(current_pointer.clone(), variables.get(operand!()).unwrap_or(&ast::Value::Null).clone());
                 variables.insert(operand!().clone(), temp);
             },
             And(expr) => {
@@ -168,22 +169,10 @@ pub fn run(parsed: &ast::Statements) -> RunOutput {
                 });
             },
             Unequal(expr) => {
-                left_right_operator!(|left, right|{
-                    match (left, right) {
-                        (ast::Value::Integer(left), ast::Value::Integer(right)) => ast::Value::Boolean(left != right),
-                        (ast::Value::String(left), ast::Value::String(right)) => ast::Value::Boolean(left != right),
-                        _ => ast::Value::Boolean(true),
-                    }
-                });
+                left_right_operator!(|left, right| ast::Value::Boolean(left != right));
             },
             Equal(expr) => {
-                left_right_operator!(|left, right|{
-                    match (left, right) {
-                        (ast::Value::Integer(left), ast::Value::Integer(right)) => ast::Value::Boolean(left == right),
-                        (ast::Value::String(left), ast::Value::String(right)) => ast::Value::Boolean(left == right),
-                        _ => ast::Value::Boolean(false),
-                    }
-                });
+                left_right_operator!(|left, right| ast::Value::Boolean(left == right));
             },
             LessThan(expr) => {
                 left_right_operator!(|left, right|{
@@ -221,39 +210,48 @@ pub fn run(parsed: &ast::Statements) -> RunOutput {
                     }
                 });
             },
-            Truthy => {
-                let value = variables.get(&current_address).unwrap_or(&ast::Value::Null);
+            Truthy() => {
+                let value = variables.get(&current_pointer).unwrap_or(&ast::Value::Null);
                 if !value_is_truthy(value) {
                     line_index += 1;
                 }
             },
-            Falsy => {
-                let value = variables.get(&current_address).unwrap_or(&ast::Value::Null);
+            Falsy() => {
+                let value = variables.get(&current_pointer).unwrap_or(&ast::Value::Null);
                 if value_is_truthy(value) {
                     line_index += 1;
                 }
             },
-            Exists => {
-                let value = variables.get(&current_address).unwrap_or(&ast::Value::Null);
+            Exists() => {
+                let value = variables.get(&current_pointer).unwrap_or(&ast::Value::Null);
                 if !value_exists(value) {
                     line_index += 1;
                 }
             },
-            Empty => {
-                let value = variables.get(&current_address).unwrap_or(&ast::Value::Null);
+            Empty() => {
+                let value = variables.get(&current_pointer).unwrap_or(&ast::Value::Null);
                 if value_exists(value) {
                     line_index += 1;
                 }
             },
-            LogValue => {
-                let string = value_to_string(variables.get(&current_address).unwrap_or(&ast::Value::Null)).to_string();
-                println!("{string}");
-                output.push_str(&(string + "\n"));
-            },
-            LogCurrentAddress => {
-                let string = value_to_string(&current_address).to_string();
-                println!("{string}");
-                output.push_str(&(string + "\n"));
+            Log { kind, reverse, newline } => {
+                let print = match kind {
+                    ast::LogKind::Value => variables.get(&current_pointer).unwrap_or(&ast::Value::Null),
+                    ast::LogKind::Pointer => &current_pointer,
+                };
+
+                let string = value_to_string(print).to_string();
+
+                let string = if *reverse {
+                    string.chars().rev().collect()
+                } else {
+                    string
+                };
+
+                let string = string + if *newline { "\n" } else { "" };
+
+                print!("{string}");
+                output.push_str(&string);
             },
         }
 

@@ -51,8 +51,17 @@ pub enum Statement {
     Exists,
     Empty,
 
-    LogValue,
-    LogCurrentAddress,
+    Log {
+        kind: LogKind,
+        reverse: bool,
+        newline: bool,
+    },
+}
+
+#[derive(Debug, Clone)]
+pub enum LogKind {
+    Value,
+    Pointer,
 }
 
 pub type Statements = Vec<Statement>;
