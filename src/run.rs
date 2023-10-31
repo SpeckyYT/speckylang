@@ -52,6 +52,7 @@ pub fn run(parsed: &ast::Statements) -> RunOutput {
                                         ast::Value::Symbol(_) => variables.get(operand!()).unwrap_or(&ast::Value::Null).clone(),
                                         _ => operand!().clone(),
                                     };
+                                    #[allow(clippy::redundant_closure_call)]
                                     let result = $callback(left, right);
                                     variables.insert(current_pointer.clone(), result);
                                 }

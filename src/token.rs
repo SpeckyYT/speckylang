@@ -29,8 +29,6 @@ pub enum Token {
     Minus,
     #[token("*")]
     Times,
-    #[token("/")]
-    Divide,
     #[token("%")]
     Modulo,
     #[token("^")]
@@ -67,8 +65,8 @@ pub enum Token {
 
     #[token("@")]
     At,
-    #[token("#")]
-    Octothorpe,
+    #[token(r"\")]
+    BackSlash,
     #[token("~")]
     Tilde,
 

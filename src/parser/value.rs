@@ -47,16 +47,8 @@ impl<'a> Parser<'a> {
 
     fn parse_integer(&mut self) -> ParseResult<ast::Integer> {
         match self.next()? {
-            Token::Minus => {
-                if let Token::IntegerLiteral = self.next()? {
-                    Ok(-self.parse_integer()?)
-                } else {
-                    Err(ParsingError::UnexpectedValue)
-                }
-            }
-            Token::Plus => {
-                self.parse_integer()
-            }
+            Token::Minus => Ok(-self.parse_integer()?),
+            Token::Plus => self.parse_integer(),
             Token::IntegerLiteral => {
                 Ok(self.slice().parse::<BigInt>().map_err(|_| ParsingError::InvalidCharacter)?)
             }

@@ -65,16 +65,15 @@ fn multi_machine() {
 
 #[test]
 fn print_test() {
-    // let output = run!("|< ab {@}");
-    // assert_eq!(output.stdout, "ab\n");
+    let output = run!(r"|< ab {@}");
+    assert_eq!(output.stdout, "ab\n");
 
-    // let output = run!("|< ab {~@}");
-    // assert_eq!(output.stdout, "ba\n");
+    let output = run!(r"|< ab {~@}");
+    assert_eq!(output.stdout, "ba\n");
 
-    // let output = run!("|< ab {@#}");
-    // assert_eq!(output.stdout, "ab");
+    let output = run!(r"|< ab{@\}");
+    assert_eq!(output.stdout, "ab");
 
-    // let output = run!("|< ab {~@#}");
-    // assert_eq!(output.stdout, "ba");
+    let output = run!(r"|< ab {~@\}");
+    assert_eq!(output.stdout, "ba");
 }
-

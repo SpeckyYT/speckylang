@@ -1,0 +1,25 @@
+|< current <= 10000
+
+[<] main
+{%\}
+|< start <= µ
+|< number <= §current
+
+|< index <= §number \ 2 + 2
+
+[<] jump
+|< index - 1
+|< temp <= §number % §index
+? [>] jump
+
+|< index > 1
+
+? <= / no, it's not prime /
+! <= / yes, it's prime /
+
+{%\}
+|< start {%}
+
+|< current - 1
+?
+[>] main

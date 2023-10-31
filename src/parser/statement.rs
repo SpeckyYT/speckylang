@@ -53,7 +53,7 @@ impl<'a> Parser<'a> {
             Plus => Plus(Expression),
             Minus => Minus(Expression),
             Times => Times(Expression),
-            Divide => Divide(Expression),
+            BackSlash => Divide(Expression),
             Modulo => Modulo(Expression),
             Exponential => Exponential(Expression),
         
@@ -77,22 +77,15 @@ impl<'a> Parser<'a> {
                 let mut newline = true;
 
                 loop {
-                    let token = self.next()?;
-                    println!("{:?}", token);
-                    match token {
+                    match self.next()? {
                         Token::Modulo => kind = Some(ast::LogKind::Value),
                         Token::At => kind = Some(ast::LogKind::Pointer),
                         Token::Tilde => reverse = !reverse,
-                        Token::Octothorpe => newline = !newline,
-                        Token::CurlyBracketClose => {
-                            println!("break");
-                            break
-                        },
+                        Token::BackSlash => newline = !newline,
+                        Token::CurlyBracketClose => break,
                         _ => return Err(ParsingError::InvalidCharacter)
                     }
                 }
-
-                println!("{}", newline);
 
                 let kind = match kind {
                     Some(kind) => kind,
@@ -109,6 +102,8 @@ impl<'a> Parser<'a> {
         while self.next_is_token() {
             program.push(self.parse_statement()?);
         }
+
+        println!("{:?}", self.next());
 
         Ok(program)
     }
