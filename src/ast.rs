@@ -46,10 +46,10 @@ pub enum Statement {
     GreaterThan(Expression),
     GreaterThanOrEqual(Expression),
 
-    Truthy,
-    Falsy,
-    Exists,
-    Empty,
+    Truthy(usize),
+    Falsy(usize),
+    Exists(usize),
+    Empty(usize),
 
     Log {
         kind: LogKind,

@@ -52,12 +52,12 @@ pub enum Token {
     Truthy,
     #[token("!")]
     Falsy,
-    #[token("??")]
+    #[token("$")]
     Exists,
-    #[token("!!")]
+    #[token("°")]
     Empty,
 
-    // {}
+    // parentheses
     #[token("{")]
     CurlyBracketOpen,
     #[token("}")]

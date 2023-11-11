@@ -20,7 +20,6 @@ pub fn run(parsed: &ast::Statements) -> RunOutput {
     let mut line_index = 0;
 
     let mut output = String::new();
-
     loop {
         if line_index >= parsed.len() { break; }
 
@@ -211,28 +210,28 @@ pub fn run(parsed: &ast::Statements) -> RunOutput {
                     }
                 });
             },
-            Truthy() => {
+            Truthy(quantity) => {
                 let value = variables.get(&current_pointer).unwrap_or(&ast::Value::Null);
                 if !value_is_truthy(value) {
-                    line_index += 1;
+                    line_index += quantity;
                 }
             },
-            Falsy() => {
+            Falsy(quantity) => {
                 let value = variables.get(&current_pointer).unwrap_or(&ast::Value::Null);
                 if value_is_truthy(value) {
-                    line_index += 1;
+                    line_index += quantity;
                 }
             },
-            Exists() => {
+            Exists(quantity) => {
                 let value = variables.get(&current_pointer).unwrap_or(&ast::Value::Null);
                 if !value_exists(value) {
-                    line_index += 1;
+                    line_index += quantity; 
                 }
             },
-            Empty() => {
+            Empty(quantity) => {
                 let value = variables.get(&current_pointer).unwrap_or(&ast::Value::Null);
                 if value_exists(value) {
-                    line_index += 1;
+                    line_index += quantity;
                 }
             },
             Log { kind, reverse, newline } => {

@@ -10,6 +10,7 @@ macro_rules! run {
             let temp = &$string;
             let mut parser = crate::parser::Parser::new(temp);
             let parsed = parser.parse_statements().unwrap();
+            println!("{:#?}", parsed);
             crate::run::run(&parsed)
         }
     };
@@ -76,4 +77,14 @@ fn print_test() {
 
     let output = run!(r"|< ab {~@\}");
     assert_eq!(output.stdout, "ba");
+}
+
+#[test]
+fn sequential_test() {
+    let bools = ["true", "false"];
+    let results = ["holy shit", "kinda sus"];
+    for i in 0..bools.len() {
+        let output = run!(format!(r"|< a <= {} ??? |< new <= /{}/ {{%}} |< a !!! |< old <= /{}/ {{%}}", bools[i], results[0], results[1]));
+        assert_eq!(output.stdout, format!("/{}/\n", results[i]));
+    }
 }

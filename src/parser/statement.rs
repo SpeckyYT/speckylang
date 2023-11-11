@@ -34,6 +34,16 @@ impl<'a> Parser<'a> {
             (# $operation:ident Expression) => {
                 Ok(Statement::$operation(self.parse_expression()?))
             };
+            (# $operation:ident Sequential) => {
+                {
+                    let mut quantity = 1;
+                    while let Some(Token::$operation) = self.peek() {
+                        self.next()?;
+                        quantity += 1;
+                    }
+                    Ok(Statement::$operation(quantity))
+                }
+            };
             (# $operation:ident) => {
                 Ok(Statement::$operation)
             };
@@ -64,10 +74,10 @@ impl<'a> Parser<'a> {
             GreaterThan => GreaterThan(Expression),
             GreaterThanOrEqual => GreaterThanOrEqual(Expression),
         
-            Truthy => Truthy(),
-            Falsy => Falsy(),
-            Exists => Exists(),
-            Empty => Empty(),
+            Truthy => Truthy(Sequential),
+            Falsy => Falsy(Sequential),
+            Exists => Exists(Sequential),
+            Empty => Empty(Sequential),
 
             #
 
@@ -102,8 +112,6 @@ impl<'a> Parser<'a> {
         while self.next_is_token() {
             program.push(self.parse_statement()?);
         }
-
-        println!("{:?}", self.next());
 
         Ok(program)
     }
