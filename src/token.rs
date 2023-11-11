@@ -87,7 +87,7 @@ pub enum Token {
     False,
     #[token("µ")]
     Time,
-    #[regex(r"/(?:\.|[^\\/])*/")]
+    #[regex(r"/(?:\.|[^/])*/")]
     StringLiteral,
     #[regex(r"[0-9]+")]
     IntegerLiteral,

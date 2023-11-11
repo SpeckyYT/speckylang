@@ -28,7 +28,10 @@ impl<'a> Parser<'a> {
             Some(Token::StringLiteral) => {
                 self.next()?;
                 let slice = self.slice();
-                Ok(ast::Value::String(slice[1..slice.len()-1].to_string()))
+                Ok(ast::Value::String(
+                    slice[1..slice.len()-1].to_string()
+                    .replace("\\n", "\n")
+                ))
             }
 
             Some(Token::Time) => {

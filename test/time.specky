@@ -1,14 +1,27 @@
+|< /set the pointer and overwrite twice/ {@\°}
+
 |< start
 <= µ
 
 |< /the time/
 <= /it takes me/
-{@}
-{%}
 |< /to get/
 <= /some bitches/
-{@}
-{%}
 
 |< start
 {%}
+
+
+|< /pool 00001/ {~@\°}
+
+|< iterations <= 10000
+
+|< start
+<= µ
+
+|< iterations
+[<] iter - 1 ? [>] iter
+
+|< start
+{%}
+

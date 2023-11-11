@@ -2,20 +2,20 @@ use std::time::Instant;
 
 use fnv::FnvHashMap;
 
-type SpeckyDataContainer<V> = FnvHashMap<ast::Value, V>;
+type SpeckyDataContainer<V> = FnvHashMap<Value, V>;
 
-use crate::ast::{self, Statement};
+use crate::ast::{Statements, Statement, Value, LogKind, Integer};
 
 pub struct RunOutput {
     pub stdout: String,
-    pub variables: SpeckyDataContainer<ast::Value>,
-    pub jump_stack: SpeckyDataContainer<usize>,
+    pub variables: SpeckyDataContainer<Value>,
+    pub jump_addresses: SpeckyDataContainer<usize>,
 }
 
-pub fn run(parsed: &ast::Statements) -> RunOutput {
-    let mut variables: SpeckyDataContainer<ast::Value> = SpeckyDataContainer::default();
-    let mut jump_stack: SpeckyDataContainer<usize> = SpeckyDataContainer::default();
-    let mut current_pointer: ast::Value = ast::Value::Null;
+pub fn run(parsed: &Statements) -> RunOutput {
+    let mut variables: SpeckyDataContainer<Value> = SpeckyDataContainer::default();
+    let mut jump_addresses: SpeckyDataContainer<usize> = SpeckyDataContainer::default();
+    let mut current_pointer: Value = Value::Null;
 
     let mut line_index = 0;
 
@@ -35,7 +35,7 @@ pub fn run(parsed: &ast::Statements) -> RunOutput {
                                         {
                                             let mut final_value = &$expr.value;
                                             for _ in 0..$expr.reader {
-                                                final_value = variables.get(&$expr.value).unwrap_or(&ast::Value::Null)
+                                                final_value = variables.get(&$expr.value).unwrap_or(&Value::Null)
                                             }
                                             final_value
                                         }
@@ -46,9 +46,9 @@ pub fn run(parsed: &ast::Statements) -> RunOutput {
                             #[allow(unused_macros)]
                             macro_rules! left_right_operator {
                                 ($callback:expr) => {
-                                    let left = variables.get(&current_pointer).unwrap_or(&ast::Value::Null).clone();
+                                    let left = variables.get(&current_pointer).unwrap_or(&Value::Null).clone();
                                     let right = match operand!() {
-                                        ast::Value::Symbol(_) => variables.get(operand!()).unwrap_or(&ast::Value::Null).clone(),
+                                        Value::Symbol(_) => variables.get(operand!()).unwrap_or(&Value::Null).clone(),
                                         _ => operand!().clone(),
                                     };
                                     #[allow(clippy::redundant_closure_call)]
@@ -71,10 +71,10 @@ pub fn run(parsed: &ast::Statements) -> RunOutput {
                 current_pointer = operand!().clone();
             },
             Define(expr) => {
-                jump_stack.insert(operand!().clone(), line_index);
+                jump_addresses.insert(operand!().clone(), line_index);
             },
             Jump(expr) => {
-                if let Some(index) = jump_stack.get(operand!()) {
+                if let Some(index) = jump_addresses.get(operand!()) {
                     line_index = *index
                 }
             },
@@ -82,7 +82,7 @@ pub fn run(parsed: &ast::Statements) -> RunOutput {
                 variables.insert(
                     current_pointer.clone(),
                     match operand!().clone() {
-                        ast::Value::Time(_) => ast::Value::Time(Instant::now()),
+                        Value::Time(_) => Value::Time(Instant::now()),
                         rest => rest,
                     }
                 );
@@ -91,154 +91,158 @@ pub fn run(parsed: &ast::Statements) -> RunOutput {
                 variables.insert(operand!().clone(), current_pointer.clone());
             },
             Swap(expr) => {
-                let temp = variables.get(&current_pointer).unwrap_or(&ast::Value::Null).clone();
-                variables.insert(current_pointer.clone(), variables.get(operand!()).unwrap_or(&ast::Value::Null).clone());
+                let temp = variables.get(&current_pointer).unwrap_or(&Value::Null).clone();
+                variables.insert(current_pointer.clone(), variables.get(operand!()).unwrap_or(&Value::Null).clone());
                 variables.insert(operand!().clone(), temp);
             },
             And(expr) => {
                 left_right_operator!(|left, right|{
                     match (value_is_truthy(&left), value_is_truthy(&right)) {
-                        (true, true) => ast::Value::Boolean(true),
-                        _ => ast::Value::Boolean(false),
+                        (true, true) => Value::Boolean(true),
+                        _ => Value::Boolean(false),
                     }
                 });
             },
             Or(expr) => {
                 left_right_operator!(|left, right|{
                     match (value_is_truthy(&left), value_is_truthy(&right)) {
-                        (false, false) => ast::Value::Boolean(false),
-                        _ => ast::Value::Boolean(true),
+                        (false, false) => Value::Boolean(false),
+                        _ => Value::Boolean(true),
                     }
                 });
             },
             Xor(expr) => {
                 left_right_operator!(|left, right|{
                     match (value_is_truthy(&left), value_is_truthy(&right)) {
-                        (true, false)|(false, true) => ast::Value::Boolean(true),
-                        _ => ast::Value::Boolean(false),
+                        (true, false)|(false, true) => Value::Boolean(true),
+                        _ => Value::Boolean(false),
                     }
                 });
             },
             Plus(expr) => {
                 left_right_operator!(|left, right|{
                     match (left, right) {
-                        (ast::Value::Integer(left), ast::Value::Integer(right)) => ast::Value::Integer(left + &right),
-                        (ast::Value::String(left), ast::Value::String(right)) => ast::Value::String(left + &right),
-                        _ => ast::Value::Null,
+                        (Value::Integer(left), Value::Integer(right)) => Value::Integer(left + &right),
+                        (Value::String(left), Value::String(right)) => Value::String(left + &right),
+                        _ => Value::Null,
                     }
                 });
             },
             Minus(expr) => {
                 left_right_operator!(|left, right|{
                     match (left, right) {
-                        (ast::Value::Integer(left), ast::Value::Integer(right)) => ast::Value::Integer(left - &right),
-                        _ => ast::Value::Null,
+                        (Value::Integer(left), Value::Integer(right)) => Value::Integer(left - &right),
+                        _ => Value::Null,
                     }
                 });
             },
             Times(expr) => {
                 left_right_operator!(|left, right|{
                     match (left, right) {
-                        (ast::Value::Integer(left), ast::Value::Integer(right)) => ast::Value::Integer(left * &right),
-                        _ => ast::Value::Null,
+                        (Value::Integer(left), Value::Integer(right)) => Value::Integer(left * &right),
+                        _ => Value::Null,
                     }
                 });
             },
             Divide(expr) => {
                 left_right_operator!(|left, right|{
                     match (left, right) {
-                        (ast::Value::Integer(left), ast::Value::Integer(right)) => ast::Value::Integer(left / &right),
-                        _ => ast::Value::Null,
+                        (Value::Integer(left), Value::Integer(right)) => Value::Integer(left / &right),
+                        _ => Value::Null,
                     }
                 });
             },
             Modulo(expr) => {
                 left_right_operator!(|left, right|{
                     match (left, right) {
-                        (ast::Value::Integer(left), ast::Value::Integer(right)) => ast::Value::Integer(left % &right),
-                        _ => ast::Value::Null,
+                        (Value::Integer(left), Value::Integer(right)) => Value::Integer(left % &right),
+                        _ => Value::Null,
                     }
                 });
             },
             Exponential(expr) => {
                 left_right_operator!(|left, right|{
                     match (left, right) {
-                        (ast::Value::Integer(left), ast::Value::Integer(right)) => ast::Value::Integer(left.pow(right.try_into().unwrap())),
-                        _ => ast::Value::Null,
+                        (Value::Integer(left), Value::Integer(right)) => Value::Integer(left.pow(right.try_into().unwrap())),
+                        _ => Value::Null,
                     }
                 });
             },
             Unequal(expr) => {
-                left_right_operator!(|left, right| ast::Value::Boolean(left != right));
+                left_right_operator!(|left, right| Value::Boolean(left != right));
             },
             Equal(expr) => {
-                left_right_operator!(|left, right| ast::Value::Boolean(left == right));
+                left_right_operator!(|left, right| Value::Boolean(left == right));
             },
             LessThan(expr) => {
                 left_right_operator!(|left, right|{
                     match (left, right) {
-                        (ast::Value::Integer(left), ast::Value::Integer(right)) => ast::Value::Boolean(left < right),
-                        (ast::Value::String(left), ast::Value::String(right)) => ast::Value::Boolean(left < right),
-                        _ => ast::Value::Null,
+                        (Value::Integer(left), Value::Integer(right)) => Value::Boolean(left < right),
+                        (Value::String(left), Value::String(right)) => Value::Boolean(left < right),
+                        _ => Value::Null,
                     }
                 });
             },
             GreaterThan(expr) => {
                 left_right_operator!(|left, right|{
                     match (left, right) {
-                        (ast::Value::Integer(left), ast::Value::Integer(right)) => ast::Value::Boolean(left > right),
-                        (ast::Value::String(left), ast::Value::String(right)) => ast::Value::Boolean(left > right),
-                        _ => ast::Value::Null,
+                        (Value::Integer(left), Value::Integer(right)) => Value::Boolean(left > right),
+                        (Value::String(left), Value::String(right)) => Value::Boolean(left > right),
+                        _ => Value::Null,
                     }
                 });
             },
             LessThanOrEqual(expr) => {
                 left_right_operator!(|left, right|{
                     match (left, right) {
-                        (ast::Value::Integer(left), ast::Value::Integer(right)) => ast::Value::Boolean(left <= right),
-                        (ast::Value::String(left), ast::Value::String(right)) => ast::Value::Boolean(left <= right),
-                        _ => ast::Value::Null,
+                        (Value::Integer(left), Value::Integer(right)) => Value::Boolean(left <= right),
+                        (Value::String(left), Value::String(right)) => Value::Boolean(left <= right),
+                        _ => Value::Null,
                     }
                 });
             },
             GreaterThanOrEqual(expr) => {
                 left_right_operator!(|left, right|{
                     match (left, right) {
-                        (ast::Value::Integer(left), ast::Value::Integer(right)) => ast::Value::Boolean(left >= right),
-                        (ast::Value::String(left), ast::Value::String(right)) => ast::Value::Boolean(left >= right),
-                        _ => ast::Value::Null,
+                        (Value::Integer(left), Value::Integer(right)) => Value::Boolean(left >= right),
+                        (Value::String(left), Value::String(right)) => Value::Boolean(left >= right),
+                        _ => Value::Null,
                     }
                 });
             },
             Truthy(quantity) => {
-                let value = variables.get(&current_pointer).unwrap_or(&ast::Value::Null);
+                let value = variables.get(&current_pointer).unwrap_or(&Value::Null);
                 if !value_is_truthy(value) {
                     line_index += quantity;
                 }
             },
             Falsy(quantity) => {
-                let value = variables.get(&current_pointer).unwrap_or(&ast::Value::Null);
+                let value = variables.get(&current_pointer).unwrap_or(&Value::Null);
                 if value_is_truthy(value) {
                     line_index += quantity;
                 }
             },
             Exists(quantity) => {
-                let value = variables.get(&current_pointer).unwrap_or(&ast::Value::Null);
+                let value = variables.get(&current_pointer).unwrap_or(&Value::Null);
                 if !value_exists(value) {
                     line_index += quantity; 
                 }
             },
             Empty(quantity) => {
-                let value = variables.get(&current_pointer).unwrap_or(&ast::Value::Null);
+                let value = variables.get(&current_pointer).unwrap_or(&Value::Null);
                 if value_exists(value) {
                     line_index += quantity;
                 }
             },
-            Log { kind, reverse, newline } => {
-                let print = match kind {
-                    ast::LogKind::Value => variables.get(&current_pointer).unwrap_or(&ast::Value::Null),
-                    ast::LogKind::Pointer => &current_pointer,
+            Log { kind, reader, reverse, newline, space, vertical } => {
+                let mut print = match kind {
+                    LogKind::Value => variables.get(&current_pointer).unwrap_or(&Value::Null),
+                    LogKind::Pointer => &current_pointer,
                 };
+
+                for _ in 0..*reader {
+                    print = variables.get(&current_pointer).unwrap_or(&Value::Null);
+                }
 
                 let string = value_to_string(print).to_string();
 
@@ -248,9 +252,24 @@ pub fn run(parsed: &ast::Statements) -> RunOutput {
                     string
                 };
 
+                let string = string + &" ".repeat(*space);
                 let string = string + if *newline { "\n" } else { "" };
 
+                let string = if *vertical {
+                    let max = string.lines().map(|l| l.len()).max().unwrap_or(0);
+                    let lines = string.lines().collect::<Vec<&str>>();
+                    let mut output_lines: Vec<String> = vec![];
+
+                    for i in 0..max {
+                        output_lines.push(lines.iter().map(|l| l.chars().nth(i).unwrap_or(' ')).collect());
+                    }
+                    output_lines.join("\n")
+                } else {
+                    string
+                };
+
                 print!("{string}");
+
                 output.push_str(&string);
             },
         }
@@ -261,12 +280,12 @@ pub fn run(parsed: &ast::Statements) -> RunOutput {
     RunOutput {
         stdout: output,
         variables,
-        jump_stack,
+        jump_addresses,
     }
 }
 
-fn value_to_string(value: &ast::Value) -> String {
-    use ast::Value::*;
+fn value_to_string(value: &Value) -> String {
+    use Value::*;
     match value {
         Symbol(s) => s.to_string(),
         Boolean(b) => b.to_string(),
@@ -277,18 +296,17 @@ fn value_to_string(value: &ast::Value) -> String {
     }
 }
 
-fn value_is_truthy(value: &ast::Value) -> bool {
-    use ast::Value::*;
+fn value_is_truthy(value: &Value) -> bool {
     match value {
-        Symbol(_) => true,
-        Boolean(b) => *b,
-        Integer(n) => *n != crate::ast::Integer::from(0),
-        String(s) => !s.is_empty(),
-        Time(_) => true,
-        Null => false,
+        Value::Symbol(_) => true,
+        Value::Boolean(b) => *b,
+        Value::Integer(n) => *n != Integer::from(0),
+        Value::String(s) => !s.is_empty(),
+        Value::Time(_) => true,
+        Value::Null => false,
     }
 }
 
-fn value_exists(value: &ast::Value) -> bool {
-    !matches!(value, ast::Value::Null)
+fn value_exists(value: &Value) -> bool {
+    !matches!(value, Value::Null)
 }

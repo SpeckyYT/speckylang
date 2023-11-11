@@ -53,8 +53,11 @@ pub enum Statement {
 
     Log {
         kind: LogKind,
+        reader: usize,
         reverse: bool,
         newline: bool,
+        space: usize,
+        vertical: bool,
     },
 }
 

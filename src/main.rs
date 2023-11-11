@@ -57,13 +57,11 @@ fn main() {
     };
 }
 
-#[elapsed_time::elapsed]
 fn parse(code: &str) -> Vec<ast::Statement> {
     let mut parser = parser::Parser::new(code);
     parser.parse_statements().unwrap()
 }
 
-#[elapsed_time::elapsed]
 fn run(parsed: &Vec<ast::Statement>) {
     run::run(parsed);
 }

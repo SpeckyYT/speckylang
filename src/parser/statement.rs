@@ -3,7 +3,7 @@ use crate::{ast::{self, Statement}, token::Token};
 use super::{Parser, ParseResult, ParsingError};
 
 impl<'a> Parser<'a> {
-    pub fn parse_statement(&mut self) -> ParseResult<ast::Statement> {
+    pub fn parse_statement(&mut self) -> ParseResult<Statement> {
         let token = self.next()?;
 
         macro_rules! match_operation {
@@ -83,15 +83,21 @@ impl<'a> Parser<'a> {
 
             CurlyBracketOpen => {
                 let mut kind = None;
+                let mut reader = 0;
                 let mut reverse = false;
                 let mut newline = true;
+                let mut space = 0;
+                let mut vertical = false;
 
                 loop {
                     match self.next()? {
                         Token::Modulo => kind = Some(ast::LogKind::Value),
                         Token::At => kind = Some(ast::LogKind::Pointer),
+                        Token::Reader => reader += 1,
                         Token::Tilde => reverse = !reverse,
                         Token::BackSlash => newline = !newline,
+                        Token::Empty => space += 1,
+                        Token::Exponential => vertical = !vertical,
                         Token::CurlyBracketClose => break,
                         _ => return Err(ParsingError::InvalidCharacter)
                     }
@@ -102,7 +108,14 @@ impl<'a> Parser<'a> {
                     None => return Err(ParsingError::InvalidCharacter),
                 };
 
-                Ok(ast::Statement::Log { kind, reverse, newline })
+                Ok(Statement::Log {
+                    kind,
+                    reader,
+                    reverse,
+                    newline,
+                    space,
+                    vertical,
+                })
             },
         )
     }
