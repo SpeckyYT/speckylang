@@ -1,8 +1,6 @@
 use std::time::Instant;
 
-use num_bigint::BigInt;
-
-use crate::{ast, token::Token};
+use crate::{ast::{self, Float, Integer}, token::Token};
 
 use super::{Parser, ParseResult, ParsingError};
 
@@ -22,7 +20,7 @@ impl<'a> Parser<'a> {
                 }))
             }
 
-            Some(Token::Minus|Token::Plus|Token::IntegerLiteral) => {
+            Some(Token::Minus|Token::Plus|Token::IntegerLiteral|Token::FloatLiteral) => {
                 let mut negative = false;
                 loop {
                     match self.next()? {
@@ -30,10 +28,16 @@ impl<'a> Parser<'a> {
                         Token::Minus => negative = !negative,
                         Token::IntegerLiteral => {
                             let integer = self.slice()
-                                .parse::<BigInt>()
+                                .parse::<Integer>()
                                 .map_err(|_| ParsingError::InvalidCharacter)?;
                             return Ok(ast::Value::Integer(if negative { -integer } else { integer }))
                         },
+                        Token::FloatLiteral => {
+                            let float = self.slice()
+                                .parse::<Float>()
+                                .map_err(|_| ParsingError::InvalidCharacter)?;
+                            return Ok(ast::Value::Float(if negative { -float } else { float }))
+                        }
                         _ => return Err(ParsingError::UnexpectedValue),
                     }
                 }

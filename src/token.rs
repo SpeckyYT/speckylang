@@ -91,6 +91,8 @@ pub enum Token {
     StringLiteral,
     #[regex(r"[0-9]+")]
     IntegerLiteral,
+    #[regex(r"[0-9]+\.[0-9]+")]
+    FloatLiteral,
 
     #[regex(r"[ \t\n]*|(#[^\n]*\n)", logos::skip)]
     Error,

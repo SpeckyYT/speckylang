@@ -1,15 +1,18 @@
-use std::time::Instant;
+use std::{time::Instant, hash::Hash};
 
 use num_bigint::BigInt;
+use num_bigfloat::BigFloat;
 
-pub type Integer = BigInt;
 pub type Text = String;
+pub type Integer = BigInt;
+pub type Float = BigFloat;
 
 #[derive(Debug, Hash, PartialEq, Eq, Clone)]
 pub enum Value {
     Symbol(String),
     Boolean(bool),
     Integer(Integer),
+    Float(Float),
     Text(Text),
     Time(Instant),
     Null,

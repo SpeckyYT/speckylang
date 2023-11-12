@@ -4,7 +4,7 @@ use fnv::FnvHashMap;
 
 type SpeckyDataContainer<V> = FnvHashMap<Value, V>;
 
-use crate::ast::{Statements, Statement, Value, LogKind, Integer};
+use crate::ast::{Statements, Statement, Value, LogKind, Integer, Float};
 
 pub struct RunOutput {
     pub stdout: String,
@@ -124,6 +124,7 @@ pub fn run(parsed: &Statements) -> RunOutput {
                     match (left, right) {
                         (Value::Integer(left), Value::Integer(right)) => Value::Integer(left + &right),
                         (Value::Text(left), Value::Text(right)) => Value::Text(left + &right),
+                        (Value::Float(left), Value::Float(right)) => Value::Float(left + right),
                         _ => Value::Null,
                     }
                 });
@@ -132,6 +133,7 @@ pub fn run(parsed: &Statements) -> RunOutput {
                 left_right_operator!(|left, right|{
                     match (left, right) {
                         (Value::Integer(left), Value::Integer(right)) => Value::Integer(left - &right),
+                        (Value::Float(left), Value::Float(right)) => Value::Float(left - right),
                         _ => Value::Null,
                     }
                 });
@@ -140,6 +142,7 @@ pub fn run(parsed: &Statements) -> RunOutput {
                 left_right_operator!(|left, right|{
                     match (left, right) {
                         (Value::Integer(left), Value::Integer(right)) => Value::Integer(left * &right),
+                        (Value::Float(left), Value::Float(right)) => Value::Float(left * right),
                         _ => Value::Null,
                     }
                 });
@@ -148,6 +151,7 @@ pub fn run(parsed: &Statements) -> RunOutput {
                 left_right_operator!(|left, right|{
                     match (left, right) {
                         (Value::Integer(left), Value::Integer(right)) => Value::Integer(left / &right),
+                        (Value::Float(left), Value::Float(right)) => Value::Float(left / right),
                         _ => Value::Null,
                     }
                 });
@@ -156,6 +160,7 @@ pub fn run(parsed: &Statements) -> RunOutput {
                 left_right_operator!(|left, right|{
                     match (left, right) {
                         (Value::Integer(left), Value::Integer(right)) => Value::Integer(left % &right),
+                        (Value::Float(left), Value::Float(right)) => Value::Float(left % right),
                         _ => Value::Null,
                     }
                 });
@@ -164,6 +169,7 @@ pub fn run(parsed: &Statements) -> RunOutput {
                 left_right_operator!(|left, right|{
                     match (left, right) {
                         (Value::Integer(left), Value::Integer(right)) => Value::Integer(left.pow(right.try_into().unwrap())),
+                        (Value::Float(left), Value::Float(right)) => Value::Float(left.pow(&right)),
                         _ => Value::Null,
                     }
                 });
@@ -179,6 +185,7 @@ pub fn run(parsed: &Statements) -> RunOutput {
                     match (left, right) {
                         (Value::Integer(left), Value::Integer(right)) => Value::Boolean(left < right),
                         (Value::Text(left), Value::Text(right)) => Value::Boolean(left < right),
+                        (Value::Float(left), Value::Float(right)) => Value::Boolean(left < right),
                         _ => Value::Null,
                     }
                 });
@@ -188,6 +195,7 @@ pub fn run(parsed: &Statements) -> RunOutput {
                     match (left, right) {
                         (Value::Integer(left), Value::Integer(right)) => Value::Boolean(left > right),
                         (Value::Text(left), Value::Text(right)) => Value::Boolean(left > right),
+                        (Value::Float(left), Value::Float(right)) => Value::Boolean(left > right),
                         _ => Value::Null,
                     }
                 });
@@ -197,6 +205,7 @@ pub fn run(parsed: &Statements) -> RunOutput {
                     match (left, right) {
                         (Value::Integer(left), Value::Integer(right)) => Value::Boolean(left <= right),
                         (Value::Text(left), Value::Text(right)) => Value::Boolean(left <= right),
+                        (Value::Float(left), Value::Float(right)) => Value::Boolean(left <= right),
                         _ => Value::Null,
                     }
                 });
@@ -206,6 +215,7 @@ pub fn run(parsed: &Statements) -> RunOutput {
                     match (left, right) {
                         (Value::Integer(left), Value::Integer(right)) => Value::Boolean(left >= right),
                         (Value::Text(left), Value::Text(right)) => Value::Boolean(left >= right),
+                        (Value::Float(left), Value::Float(right)) => Value::Boolean(left >= right),
                         _ => Value::Null,
                     }
                 });
@@ -289,6 +299,7 @@ fn value_to_string(value: &Value) -> String {
         Value::Symbol(s) => s.to_string(),
         Value::Boolean(b) => b.to_string(),
         Value::Integer(i) => i.to_string(),
+        Value::Float(f) => f.to_f64().to_string(),
         Value::Text(s) => format!("/{}/", s.replace('/', r"\/")),
         Value::Time(d) => format!("{:?}", d.elapsed()),
         Value::Null => "null".to_string(),
@@ -300,6 +311,7 @@ fn value_is_truthy(value: &Value) -> bool {
         Value::Symbol(_) => true,
         Value::Boolean(b) => *b,
         Value::Integer(n) => *n != Integer::from(0),
+        Value::Float(f) => !f.is_nan() && !f.is_inf() && *f != Float::from(0.0),
         Value::Text(s) => !s.is_empty(),
         Value::Time(_) => true,
         Value::Null => false,
