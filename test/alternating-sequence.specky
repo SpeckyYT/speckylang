@@ -1,0 +1,26 @@
+# start with 0
+# increment by 1
+# decrement by 2
+# increment by 3
+# decrement by 4
+# etc
+
+|< times <= 100 # any positive number >= 1
+
+|< index <= 0   # only 0
+|< number <= 0  # only 0
+
+[<] jump
+|< index + 1
+|< times - 1
+
+
+|< temp <= §index % 2
+
+?? |< number + §index
+!! |< number - §index
+
+|< times
+? [>] jump
+
+|< number {%}
