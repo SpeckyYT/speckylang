@@ -1,0 +1,25 @@
+|< total    <= 3.0
+
+|< top      <= 4.0
+
+|< index <= 1.0
+
+[<] loop
+    |< index {%°\}
+
+    |< first <= §index + 1.0
+    |< second <= §index + 2.0
+    |< third <= §index + 3.0
+
+    |< bottom <= §first * §second * §third
+    |< product <= §top \ §bottom
+
+    |< temp <= §index \ 2.0 % 2.0 > 1.0
+
+    ?? |< total - §product
+    !! |< total + §product
+
+    {%}
+
+    |< index + 2.0
+[>] loop

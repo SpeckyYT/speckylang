@@ -1,0 +1,19 @@
+|< total    <= 0.0
+
+|< top      <= 4.0
+|< bottom   <= 1.0
+
+|< index <= 1
+
+[<] loop
+    |< temp <= §top \ §bottom
+    |< bottom + 2.0
+    |< sign <= §index % 2 > 0
+
+    ?? |< total + §temp
+    !! |< total - §temp
+
+    {%}
+
+    |< index + 1
+[>] loop

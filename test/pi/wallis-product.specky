@@ -1,0 +1,20 @@
+|< total    <= 1.0
+
+|< top      <= 2.0
+|< bottom   <= 1.0
+
+[<] loop
+    |< total
+    * §top
+    \ §bottom
+
+    |< bottom + 2.0
+
+    |< total
+    * §top
+    \ §bottom
+
+    |< temp <= §total * 2.0 {%}
+
+    |< top + 2.0
+[>] loop
