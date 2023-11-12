@@ -22,19 +22,57 @@ impl<'a> Parser<'a> {
                 }))
             }
 
-            Some(Token::Minus|Token::Plus|Token::IntegerLiteral) =>
-                Ok(ast::Value::Integer(self.parse_integer()?)),
+            Some(Token::Minus|Token::Plus|Token::IntegerLiteral) => {
+                let mut negative = false;
+                loop {
+                    match self.next()? {
+                        Token::Plus => {},
+                        Token::Minus => negative = !negative,
+                        Token::IntegerLiteral => {
+                            let integer = self.slice()
+                                .parse::<BigInt>()
+                                .map_err(|_| ParsingError::InvalidCharacter)?;
+                            return Ok(ast::Value::Integer(if negative { -integer } else { integer }))
+                        },
+                        _ => return Err(ParsingError::UnexpectedValue),
+                    }
+                }
+            },
 
             Some(Token::StringLiteral) => {
                 self.next()?;
                 let slice = self.slice();
-                Ok(ast::Value::String(
-                    slice[1..slice.len()-1].to_string()
-                    .replace("\\n", "\n")
-                ))
+
+                let mut text = String::new();
+                let mut is_escape = false;
+                
+                for char in slice[1..slice.len()-1].chars() {
+                    if is_escape {
+                        text.push_str(match char {
+                            'r' => "\r",
+                            'n' => "\n",
+                            't' => "\t",
+                            '0' => "\0",
+                            '\\'=> "\\",
+                            _ => return Err(ParsingError::InvalidCharacter),
+                        })
+                    } else {
+                        if char == '\\' {
+                            is_escape = true
+                        } else {
+                            text.push(char)
+                        }
+                    }
+                }
+                
+                if is_escape {
+                    return Err(ParsingError::InvalidCharacter)
+                }
+
+                Ok(ast::Value::Text(text))
             }
 
-            Some(Token::Time) => {
+            Some(Token::Mu) => {
                 self.next()?;
                 Ok(ast::Value::Time(Instant::now()))
             }
@@ -45,17 +83,6 @@ impl<'a> Parser<'a> {
             }
 
             _ => Err(ParsingError::UnexpectedValue)
-        }
-    }
-
-    fn parse_integer(&mut self) -> ParseResult<ast::Integer> {
-        match self.next()? {
-            Token::Minus => Ok(-self.parse_integer()?),
-            Token::Plus => self.parse_integer(),
-            Token::IntegerLiteral => {
-                Ok(self.slice().parse::<BigInt>().map_err(|_| ParsingError::InvalidCharacter)?)
-            }
-            _ => Err(ParsingError::UnexpectedValue),
         }
     }
 }

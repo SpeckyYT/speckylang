@@ -3,13 +3,14 @@ use std::time::Instant;
 use num_bigint::BigInt;
 
 pub type Integer = BigInt;
+pub type Text = String;
 
 #[derive(Debug, Hash, PartialEq, Eq, Clone)]
 pub enum Value {
     Symbol(String),
     Boolean(bool),
     Integer(Integer),
-    String(String),
+    Text(Text),
     Time(Instant),
     Null,
 }

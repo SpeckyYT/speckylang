@@ -62,10 +62,10 @@ impl<'a> Parser<'a> {
             Xor => Xor(Expression),
             Plus => Plus(Expression),
             Minus => Minus(Expression),
-            Times => Times(Expression),
-            BackSlash => Divide(Expression),
-            Modulo => Modulo(Expression),
-            Exponential => Exponential(Expression),
+            Asterisk => Times(Expression),
+            Backslash => Divide(Expression),
+            Percent => Modulo(Expression),
+            Circumflex => Exponential(Expression),
         
             Unequal => Unequal(Expression),
             Equal => Equal(Expression),
@@ -91,13 +91,13 @@ impl<'a> Parser<'a> {
 
                 loop {
                     match self.next()? {
-                        Token::Modulo => kind = Some(ast::LogKind::Value),
+                        Token::Percent => kind = Some(ast::LogKind::Value),
                         Token::At => kind = Some(ast::LogKind::Pointer),
                         Token::Reader => reader += 1,
                         Token::Tilde => reverse = !reverse,
-                        Token::BackSlash => newline = !newline,
+                        Token::Backslash => newline = !newline,
                         Token::Empty => space += 1,
-                        Token::Exponential => vertical = !vertical,
+                        Token::Circumflex => vertical = !vertical,
                         Token::CurlyBracketClose => break,
                         _ => return Err(ParsingError::InvalidCharacter)
                     }

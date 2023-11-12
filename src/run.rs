@@ -123,7 +123,7 @@ pub fn run(parsed: &Statements) -> RunOutput {
                 left_right_operator!(|left, right|{
                     match (left, right) {
                         (Value::Integer(left), Value::Integer(right)) => Value::Integer(left + &right),
-                        (Value::String(left), Value::String(right)) => Value::String(left + &right),
+                        (Value::Text(left), Value::Text(right)) => Value::Text(left + &right),
                         _ => Value::Null,
                     }
                 });
@@ -178,7 +178,7 @@ pub fn run(parsed: &Statements) -> RunOutput {
                 left_right_operator!(|left, right|{
                     match (left, right) {
                         (Value::Integer(left), Value::Integer(right)) => Value::Boolean(left < right),
-                        (Value::String(left), Value::String(right)) => Value::Boolean(left < right),
+                        (Value::Text(left), Value::Text(right)) => Value::Boolean(left < right),
                         _ => Value::Null,
                     }
                 });
@@ -187,7 +187,7 @@ pub fn run(parsed: &Statements) -> RunOutput {
                 left_right_operator!(|left, right|{
                     match (left, right) {
                         (Value::Integer(left), Value::Integer(right)) => Value::Boolean(left > right),
-                        (Value::String(left), Value::String(right)) => Value::Boolean(left > right),
+                        (Value::Text(left), Value::Text(right)) => Value::Boolean(left > right),
                         _ => Value::Null,
                     }
                 });
@@ -196,7 +196,7 @@ pub fn run(parsed: &Statements) -> RunOutput {
                 left_right_operator!(|left, right|{
                     match (left, right) {
                         (Value::Integer(left), Value::Integer(right)) => Value::Boolean(left <= right),
-                        (Value::String(left), Value::String(right)) => Value::Boolean(left <= right),
+                        (Value::Text(left), Value::Text(right)) => Value::Boolean(left <= right),
                         _ => Value::Null,
                     }
                 });
@@ -205,7 +205,7 @@ pub fn run(parsed: &Statements) -> RunOutput {
                 left_right_operator!(|left, right|{
                     match (left, right) {
                         (Value::Integer(left), Value::Integer(right)) => Value::Boolean(left >= right),
-                        (Value::String(left), Value::String(right)) => Value::Boolean(left >= right),
+                        (Value::Text(left), Value::Text(right)) => Value::Boolean(left >= right),
                         _ => Value::Null,
                     }
                 });
@@ -285,14 +285,13 @@ pub fn run(parsed: &Statements) -> RunOutput {
 }
 
 fn value_to_string(value: &Value) -> String {
-    use Value::*;
     match value {
-        Symbol(s) => s.to_string(),
-        Boolean(b) => b.to_string(),
-        Integer(i) => i.to_string(),
-        String(s) => format!("/{}/", s.replace('/', r"\/")),
-        Time(d) => format!("{:?}", d.elapsed()),
-        Null => "null".to_string(),
+        Value::Symbol(s) => s.to_string(),
+        Value::Boolean(b) => b.to_string(),
+        Value::Integer(i) => i.to_string(),
+        Value::Text(s) => format!("/{}/", s.replace('/', r"\/")),
+        Value::Time(d) => format!("{:?}", d.elapsed()),
+        Value::Null => "null".to_string(),
     }
 }
 
@@ -301,7 +300,7 @@ fn value_is_truthy(value: &Value) -> bool {
         Value::Symbol(_) => true,
         Value::Boolean(b) => *b,
         Value::Integer(n) => *n != Integer::from(0),
-        Value::String(s) => !s.is_empty(),
+        Value::Text(s) => !s.is_empty(),
         Value::Time(_) => true,
         Value::Null => false,
     }

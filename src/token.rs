@@ -28,11 +28,11 @@ pub enum Token {
     #[token("-")]
     Minus,
     #[token("*")]
-    Times,
+    Asterisk,
     #[token("%")]
-    Modulo,
+    Percent,
     #[token("^")]
-    Exponential,
+    Circumflex,
     #[token("><")]
     Unequal,
     #[token("=")]
@@ -66,7 +66,7 @@ pub enum Token {
     #[token("@")]
     At,
     #[token(r"\")]
-    BackSlash,
+    Backslash,
     #[token("~")]
     Tilde,
 
@@ -86,7 +86,7 @@ pub enum Token {
     #[token("false")]
     False,
     #[token("µ")]
-    Time,
+    Mu,
     #[regex(r"/(?:\.|[^/])*/")]
     StringLiteral,
     #[regex(r"[0-9]+")]
