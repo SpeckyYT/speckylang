@@ -1,4 +1,4 @@
-use std::{fs, path::PathBuf, time::{Duration, Instant}};
+use std::{fs, path::PathBuf, time::{Duration, Instant}, process};
 use clap::Parser;
 
 mod ast;
@@ -59,7 +59,13 @@ fn main() {
 
 fn parse(code: &str) -> Vec<ast::Statement> {
     let mut parser = parser::Parser::new(code);
-    parser.parse_statements().unwrap()
+    match parser.parse_statements() {
+        Ok(statements) => statements,
+        Err(error) => {
+            parser::error::print_error(code, error);
+            process::exit(1)
+        }
+    }
 }
 
 fn run(parsed: &Vec<ast::Statement>) {

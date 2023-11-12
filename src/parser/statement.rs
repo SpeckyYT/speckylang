@@ -1,6 +1,6 @@
 use crate::{ast::{self, Statement}, token::Token};
 
-use super::{Parser, ParseResult, ParsingError};
+use super::{Parser, ParseResult, error::ParsingError, error::CodeArea};
 
 impl<'a> Parser<'a> {
     pub fn parse_statement(&mut self) -> ParseResult<Statement> {
@@ -28,7 +28,11 @@ impl<'a> Parser<'a> {
                     $($(
                         Token::$arbitrary => $code,
                     )*)?
-                    _ => Err(ParsingError::UnexpectedOperator),
+                    _ => Err(ParsingError::SyntaxError {
+                        expected: "operator".to_string(),
+                        found: token,
+                        area: CodeArea::from_span(self.span()),
+                    }),
                 }
             };
             (# $operation:ident Expression) => {
@@ -90,7 +94,8 @@ impl<'a> Parser<'a> {
                 let mut vertical = false;
 
                 loop {
-                    match self.next()? {
+                    let token = self.next()?;
+                    match token {
                         Token::Percent => kind = Some(ast::LogKind::Value),
                         Token::At => kind = Some(ast::LogKind::Pointer),
                         Token::Reader => reader += 1,
@@ -99,13 +104,20 @@ impl<'a> Parser<'a> {
                         Token::Empty => space += 1,
                         Token::Circumflex => vertical = !vertical,
                         Token::CurlyBracketClose => break,
-                        _ => return Err(ParsingError::InvalidCharacter)
+                        _ => return Err(ParsingError::SyntaxError {
+                            expected: "print option".to_string(),
+                            found: token,
+                            area: CodeArea::from_span(self.span()),
+                        })
                     }
                 }
 
                 let kind = match kind {
                     Some(kind) => kind,
-                    None => return Err(ParsingError::InvalidCharacter),
+                    None => return Err(ParsingError::CustomError {
+                        text: "print has to contain `%` or `@`".to_string(),
+                        area: CodeArea::from_span(self.span()),
+                    }),
                 };
 
                 Ok(Statement::Log {

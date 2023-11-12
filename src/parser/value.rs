@@ -2,7 +2,7 @@ use std::time::Instant;
 
 use crate::{ast::{self, Float, Integer}, token::Token};
 
-use super::{Parser, ParseResult, ParsingError};
+use super::{Parser, ParseResult, ParsingError, error::CodeArea};
 
 impl<'a> Parser<'a> {
     pub fn parse_value(&mut self) -> ParseResult<ast::Value> {
@@ -23,22 +23,27 @@ impl<'a> Parser<'a> {
             Some(Token::Minus|Token::Plus|Token::IntegerLiteral|Token::FloatLiteral) => {
                 let mut negative = false;
                 loop {
-                    match self.next()? {
+                    let token = self.next()?;
+                    match token {
                         Token::Plus => {},
                         Token::Minus => negative = !negative,
                         Token::IntegerLiteral => {
                             let integer = self.slice()
                                 .parse::<Integer>()
-                                .map_err(|_| ParsingError::InvalidCharacter)?;
+                                .unwrap(); // should be unreachable in theory
                             return Ok(ast::Value::Integer(if negative { -integer } else { integer }))
                         },
                         Token::FloatLiteral => {
                             let float = self.slice()
                                 .parse::<Float>()
-                                .map_err(|_| ParsingError::InvalidCharacter)?;
+                                .unwrap(); // unreachable
                             return Ok(ast::Value::Float(if negative { -float } else { float }))
                         }
-                        _ => return Err(ParsingError::UnexpectedValue),
+                        _ => return Err(ParsingError::SyntaxError {
+                            expected: "integer or float".to_string(),
+                            found: token,
+                            area: CodeArea::from_span(self.span()),
+                        }),
                     }
                 }
             },
@@ -50,7 +55,11 @@ impl<'a> Parser<'a> {
                 let mut text = String::new();
                 let mut is_escape = false;
                 
-                for char in slice[1..slice.len()-1].chars() {
+                let chars = slice[1..slice.len()-1].chars().collect::<Vec<char>>();
+
+                for i in 0..chars.len() {
+                    let char = chars[i];
+
                     if is_escape {
                         text.push_str(match char {
                             'r' => "\r",
@@ -58,7 +67,10 @@ impl<'a> Parser<'a> {
                             't' => "\t",
                             '0' => "\0",
                             '\\'=> "\\",
-                            _ => return Err(ParsingError::InvalidCharacter),
+                            _ => return Err(ParsingError::CustomError {
+                                text: "invalid escape character".to_string(),
+                                area: CodeArea::from_span(i..i+1),
+                            }),
                         })
                     } else {
                         if char == '\\' {
@@ -70,7 +82,10 @@ impl<'a> Parser<'a> {
                 }
                 
                 if is_escape {
-                    return Err(ParsingError::InvalidCharacter)
+                    return Err(ParsingError::CustomError {
+                        text: "not sure if this is reachable".to_string(),
+                        area: CodeArea::from_span(self.span()),
+                    })
                 }
 
                 Ok(ast::Value::Text(text))
@@ -86,7 +101,11 @@ impl<'a> Parser<'a> {
                 Ok(ast::Value::Null)
             }
 
-            _ => Err(ParsingError::UnexpectedValue)
+            _ => Err(ParsingError::SyntaxError {
+                expected: "value".to_string(),
+                found: self.next()?,
+                area: CodeArea::from_span(self.span()),
+            })
         }
     }
 }

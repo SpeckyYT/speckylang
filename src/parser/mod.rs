@@ -1,6 +1,7 @@
-mod value;
-mod expression;
-mod statement;
+pub mod value;
+pub mod expression;
+pub mod statement;
+pub mod error;
 
 use std::ops::Range;
 
@@ -8,13 +9,7 @@ use logos::Lexer;
 
 use crate::token::Token;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum ParsingError {
-    UnexpectedOperator,
-    UnexpectedValue,
-    UnexpectedEndOfFile,
-    InvalidCharacter,
-}
+use self::error::{ParsingError, CodeArea};
 
 pub type ParseResult<T> = Result<T, ParsingError>;
 
@@ -38,7 +33,7 @@ impl<'a> Parser<'a> {
                     Err(()) => self.next()
                 }
             },
-            None => Err(ParsingError::UnexpectedEndOfFile),
+            None => Err(ParsingError::UnexpectedEndOfFile { area: CodeArea::from_span(self.span()) }),
         }
     }
     fn next_raw(&mut self) -> Option<Result<Token, ()>> {

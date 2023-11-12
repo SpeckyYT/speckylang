@@ -380,6 +380,7 @@ name = "speckylang"
 version = "0.1.0"
 dependencies = [
  "clap",
+ "colored",
  "fnv",
  "logos",
  "lyneate",
