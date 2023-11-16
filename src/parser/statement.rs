@@ -60,7 +60,8 @@ impl<'a> Parser<'a> {
             Assign => Assign(Expression),
             Overwrite => Overwrite(Expression),
             Swap => Swap(Expression),
-        
+            Tilde => Index(Expression),
+
             And => And(Expression),
             Or => Or(Expression),
             Xor => Xor(Expression),
@@ -88,10 +89,12 @@ impl<'a> Parser<'a> {
             CurlyBracketOpen => {
                 let mut kind = None;
                 let mut reader = 0;
+                let mut special = false;
                 let mut reverse = false;
                 let mut newline = true;
                 let mut space = 0;
                 let mut vertical = false;
+                let mut assign = false;
 
                 loop {
                     let token = self.next()?;
@@ -99,10 +102,12 @@ impl<'a> Parser<'a> {
                         Token::Percent => kind = Some(ast::LogKind::Value),
                         Token::At => kind = Some(ast::LogKind::Pointer),
                         Token::Reader => reader += 1,
+                        Token::Exists => special = !special,
                         Token::Tilde => reverse = !reverse,
                         Token::Backslash => newline = !newline,
                         Token::Empty => space += 1,
                         Token::Circumflex => vertical = !vertical,
+                        Token::LessThan => assign = !assign,
                         Token::CurlyBracketClose => break,
                         _ => return Err(ParsingError::SyntaxError {
                             expected: "print option".to_string(),
@@ -112,21 +117,15 @@ impl<'a> Parser<'a> {
                     }
                 }
 
-                let kind = match kind {
-                    Some(kind) => kind,
-                    None => return Err(ParsingError::CustomError {
-                        text: "print has to contain `%` or `@`".to_string(),
-                        area: CodeArea::from_span(self.span()),
-                    }),
-                };
-
                 Ok(Statement::Log {
                     kind,
                     reader,
+                    special,
                     reverse,
                     newline,
                     space,
                     vertical,
+                    assign,
                 })
             },
         )

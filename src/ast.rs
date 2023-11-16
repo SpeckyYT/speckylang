@@ -32,6 +32,7 @@ pub enum Statement {
     Assign(Expression),
     Overwrite(Expression),
     Swap(Expression),
+    Index(Expression),
 
     And(Expression),
     Or(Expression),
@@ -56,12 +57,14 @@ pub enum Statement {
     Empty(usize),
 
     Log {
-        kind: LogKind,
+        kind: Option<LogKind>,
         reader: usize,
+        special: bool,
         reverse: bool,
         newline: bool,
         space: usize,
         vertical: bool,
+        assign: bool,
     },
 }
 

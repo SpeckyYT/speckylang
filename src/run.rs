@@ -1,6 +1,7 @@
 use std::time::Instant;
 
 use fnv::FnvHashMap;
+use num_bigint::{TryFromBigIntError, BigInt};
 
 type SpeckyDataContainer<V> = FnvHashMap<Value, V>;
 
@@ -35,7 +36,7 @@ pub fn run(parsed: &Statements) -> RunOutput {
                                         {
                                             let mut final_value = &$expr.value;
                                             for _ in 0..$expr.reader {
-                                                final_value = variables.get(&$expr.value).unwrap_or(&Value::Null)
+                                                final_value = variables.get(&final_value).unwrap_or(&Value::Null)
                                             }
                                             final_value
                                         }
@@ -95,6 +96,26 @@ pub fn run(parsed: &Statements) -> RunOutput {
                 variables.insert(current_pointer.clone(), variables.get(operand!()).unwrap_or(&Value::Null).clone());
                 variables.insert(operand!().clone(), temp);
             },
+            Index(expr) => {
+                left_right_operator!(|left, right| {
+                    match (left, right) {
+                        (Value::Text(string), Value::Integer(integer)) => {
+                            let int: Result<usize, TryFromBigIntError<BigInt>> = integer.try_into();
+                            if let Ok(int) = int {
+                                if let Some(ch) = string.chars().nth(int) {
+                                    Value::Text(ch.to_string())
+                                } else {
+                                    Value::Null
+                                }
+                            } else {
+                                Value::Null
+                            }
+                            
+                        }
+                        _ => Value::Null,
+                    }
+                });
+            },
             And(expr) => {
                 left_right_operator!(|left, right|{
                     match (value_is_truthy(&left), value_is_truthy(&right)) {
@@ -124,6 +145,7 @@ pub fn run(parsed: &Statements) -> RunOutput {
                     match (left, right) {
                         (Value::Integer(left), Value::Integer(right)) => Value::Integer(left + &right),
                         (Value::Text(left), Value::Text(right)) => Value::Text(left + &right),
+                        (Value::Text(left), Value::Integer(right)) => Value::Text(left + &right.to_string()),
                         (Value::Float(left), Value::Float(right)) => Value::Float(left + right),
                         _ => Value::Null,
                     }
@@ -244,17 +266,21 @@ pub fn run(parsed: &Statements) -> RunOutput {
                     line_index += quantity;
                 }
             },
-            Log { kind, reader, reverse, newline, space, vertical } => {
-                let mut print = match kind {
-                    LogKind::Value => variables.get(&current_pointer).unwrap_or(&Value::Null),
-                    LogKind::Pointer => &current_pointer,
+            Log { kind, reader, special, reverse, newline, space, vertical, assign } => {
+                let string = if let Some(kind) = kind {
+                    let mut print = match kind {
+                        LogKind::Value => variables.get(&current_pointer).unwrap_or(&Value::Null),
+                        LogKind::Pointer => &current_pointer,
+                    };
+
+                    for _ in 0..*reader {
+                        print = variables.get(&print).unwrap_or(&Value::Null);
+                    }
+
+                    value_to_string(print, *special).to_string()
+                } else {
+                    "".to_string()
                 };
-
-                for _ in 0..*reader {
-                    print = variables.get(&current_pointer).unwrap_or(&Value::Null);
-                }
-
-                let string = value_to_string(print).to_string();
 
                 let string = if *reverse {
                     string.chars().rev().collect()
@@ -278,6 +304,20 @@ pub fn run(parsed: &Statements) -> RunOutput {
                     string
                 };
 
+                if *assign {
+                    let _ = variables.insert(
+                        current_pointer.clone(),
+                        match string.as_str() {
+                            "false" => Value::Boolean(false),
+                            "true" => Value::Boolean(true),
+                            "null" => Value::Null,
+                            string if string.chars().all(|c| char::is_ascii_digit(&c)) =>
+                                Value::Integer(string.parse().unwrap()),
+                            string => Value::Text(string.to_string()),
+                        }
+                    );
+                }
+
                 print!("{string}");
 
                 output.push_str(&string);
@@ -294,15 +334,33 @@ pub fn run(parsed: &Statements) -> RunOutput {
     }
 }
 
-fn value_to_string(value: &Value) -> String {
-    match value {
-        Value::Symbol(s) => s.to_string(),
-        Value::Boolean(b) => b.to_string(),
-        Value::Integer(i) => i.to_string(),
-        Value::Float(f) => f.to_f64().to_string(),
-        Value::Text(s) => format!("/{}/", s.replace('/', r"\/")),
-        Value::Time(d) => format!("{:?}", d.elapsed()),
-        Value::Null => "null".to_string(),
+fn value_to_string(value: &Value, special: bool) -> String {
+    match (value, special) {
+        (Value::Symbol(s), false) => s.to_string(),
+        (Value::Symbol(s), true) => Integer::from_bytes_be(num_bigint::Sign::Plus, s.as_bytes()).to_string(),
+
+        (Value::Boolean(b), false) => b.to_string(),
+        (Value::Boolean(b), true) => format!("{}", if *b { 1 } else { 0 }),
+
+        (Value::Integer(i), false) => i.to_string(),
+        (Value::Integer(i), true) =>
+            i.try_into()
+            .ok()
+            .and_then(|i| char::from_u32(i))
+            .map(|c| c.to_string())
+            .unwrap_or_else(|| char::REPLACEMENT_CHARACTER.to_string()),
+
+        (Value::Float(f), false) => f.to_string(),
+        (Value::Float(f), true) => f.to_f64().to_string(),
+
+        (Value::Text(s), false) => format!("/{}/", s.replace('/', r"\/")),
+        (Value::Text(s), true) => format!("{s}"),
+
+        (Value::Time(d), false) => format!("{:?}", d.elapsed()),
+        (Value::Time(d), true) => format!("{}", d.elapsed().as_secs_f64()),
+
+        (Value::Null, false) => "null".to_string(),
+        (Value::Null, true) => "\0".to_string(),
     }
 }
 

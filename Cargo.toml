@@ -11,5 +11,5 @@ colored = "2.0.4"
 fnv = "1.0.7"
 logos = "0.13.0"
 lyneate = "0.2.0"
-num-bigfloat = "1.7.0"
+num-bigfloat = { git = "https://github.com/SpeckyYT/num-bigfloat", version = "1.7.0" }
 num-bigint = "0.4.4"

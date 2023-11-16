@@ -8,9 +8,6 @@ use crate::token::Token;
 pub struct CodeArea(pub usize, pub usize);
 
 impl CodeArea {
-    pub fn new() -> Self {
-        Default::default()
-    }
     pub fn from_span(range: Range<usize>) -> Self {
         Self(range.start, range.end)
     }
