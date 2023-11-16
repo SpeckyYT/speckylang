@@ -88,3 +88,27 @@ fn sequential_test() {
         assert_eq!(output.stdout, format!("/{}/\n", results[i]));
     }
 }
+
+#[test]
+fn brainfuck() {
+    let string = read!("test/brainfuck.specky");
+
+    let run = |instructions: &str, debug: bool| {
+        run!(
+            string
+            .replace("{INPUT}", instructions)
+            .replace("{DEBUG}", &debug.to_string())
+        ).stdout
+    };
+
+    // https://github.com/saulpw/brainfuck/blob/master/tests
+    assert_eq!(
+        run("+++++[>+++++++>++<<-]>.>.][", false),
+        "#\n"
+    );
+
+    assert_eq!(
+        run(".+[.+]", false),
+        (0..=255).into_iter().map(|i| char::from(i)).collect::<String>()
+    );
+}

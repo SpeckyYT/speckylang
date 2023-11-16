@@ -1,0 +1,55 @@
+|< input <= /{INPUT}/
+|< debug <= {DEBUG}
+
+###############################################################################
+
+|< instruction <= 0     # input index
+|< depth <= 0           # bf loop depth
+|< address <= 0         # bf pointer
+
+[<] brainfuck
+
+|< current_instruction <= §input ~ §instruction
+|< §address ! <= 0
+
+|< debug ? ??? ???? ??? ??? ? ??
+    {}
+    |< current_instruction {@°\} {%}
+    |< address {@°\} {%°\} {%§}
+    |< depth {@°\} {%}
+    |< instruction {@°\} {%}
+    {}
+    |< /output/ {@}
+
+|< temp <= §current_instruction = /+/ ?? ???? ??
+    |< §address + 1
+    |< temp <= §§address > 255 ??
+        |< §address <= 0
+|< temp <= §current_instruction = /-/ ?? ???? ??
+    |< §address - 1
+    |< temp <= §§address < 0 ??
+        |< §address <= 255
+|< temp <= §current_instruction = />/ ??
+    |< address + 1
+|< temp <= §current_instruction = /</ ??
+    |< address - 1
+|< temp <= §current_instruction = /[/ ??? ?? ??
+    |< temp <= /depth/ + depth
+    |< §temp <= §instruction
+    |< depth + 1
+|< temp <= §current_instruction = /]/ ???? ???? ??? ??? ??  ???? ??
+    |< temp <= §depth > 0 ???? ??? ??? ??  ???? ??
+        |< temp <= §§address = 0 !! !!! !!
+            |< temp_depth <= §depth - 1
+            |< temp <= /depth/ + temp_depth
+            |< instruction <= §§temp
+        |< temp <= §§address = 0 ??
+            |< depth - 1
+|< temp <= §current_instruction = /./ ??
+    |< §address {%$\}
+|< temp <= §current_instruction = /,/ ??
+    |< /seme the fuck/ {@}
+
+|< instruction + 1
+
+|< current_instruction ? [>] brainfuck
