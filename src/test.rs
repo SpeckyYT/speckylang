@@ -90,6 +90,22 @@ fn sequential_test() {
 }
 
 #[test]
+fn fizzbuzz() {
+    assert_eq!(
+        run!(read!("test/fizzbuzz.specky")).stdout,
+        (1..=1000)
+        .map(|i|{
+            let mut string = String::with_capacity(8);
+            if i % 3 == 0 { string += "Fizz" }
+            if i % 5 == 0 { string += "Buzz" }
+            if string.is_empty() { string += &i.to_string() }
+            string + "\n"
+        })
+        .collect::<String>()
+    )
+}
+
+#[test]
 fn brainfuck() {
     let string = read!("test/brainfuck.specky");
 

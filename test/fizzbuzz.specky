@@ -1,0 +1,10 @@
+|< number <= 1
+
+[<] loop
+|< is_three <= §number % 3 !! |< Fizz {@\}
+|< is_five <= §number % 5 !! |< Buzz {@\}
+|< is_three ???? |< is_five ?? |< number {%\}
+{}
+|< number + 1
+|< temp <= §number - 1000 =< 0 ?
+[>] loop
