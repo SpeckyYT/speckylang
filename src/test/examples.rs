@@ -7,15 +7,20 @@ const MAX_BOTTLES: usize = 99;
 fn bottles_of_beer() {
     let output = test_run!(test_read!("test/99-bottles-of-beer.specky"));
 
+    const fn plural(i: usize) -> &'static str { if i == 1 { "" } else { "s" } }
+
+    const MAX_BOTTLES_PLURAL: &str = plural(MAX_BOTTLES);
+
     let expected = (1..=MAX_BOTTLES).rev()
         .map(|i| {
+            let s = plural(i);
             let d = i - 1;
-            let s = if i == 1 { "" } else { "s" };
+            let sd = plural(d);
             [
                 format!("{i} bottle{s} of beer on the wall,"),
                 format!("{i} bottle{s} of beer."),
                 "Take one down, pass it around,".to_string(),
-                format!("{d} bottle{} of beer on the wall,", if d == 1 { "" } else { "s" }),
+                format!("{d} bottle{sd} of beer on the wall,"),
                 "".to_string(),
                 "".to_string(),
             ].join("\n")
@@ -24,7 +29,7 @@ fn bottles_of_beer() {
             "No bottles of beer on the wall,",
             "No bottles of beer.",
             "Go to the store, buy some more,",
-            &format!("{MAX_BOTTLES} bottle{} of beer on the wall.", if MAX_BOTTLES == 1 { "" } else { "s" }),
+            &format!("{MAX_BOTTLES} bottle{MAX_BOTTLES_PLURAL} of beer on the wall."),
             "",
         ].join("\n");
 

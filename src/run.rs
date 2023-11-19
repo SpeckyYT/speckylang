@@ -257,12 +257,12 @@ pub fn run(parsed: &Statements) -> RunOutput {
             Empty(quantity) => { condition_jump!(|value| !value_exists(value), quantity); },
             Log { kind, reader, special, reverse, newline, space, vertical, assign } => {
                 let string = if let Some(kind) = kind {
-                    let print = match kind {
-                        LogKind::Value => variables.get(&current_pointer).unwrap_or(&Value::Null),
-                        LogKind::Pointer => &current_pointer,
+                    let reader = reader + match kind {
+                        LogKind::Value => 1,
+                        LogKind::Pointer => 0,
                     };
 
-                    let print = value_reader(&variables, print, *reader);
+                    let print = value_reader(&variables, &current_pointer, reader);
 
                     value_to_string(print, *special).to_string()
                 } else {
@@ -337,11 +337,11 @@ fn value_reader<'a>(memory: &'a SpeckyDataContainer<Value>, value: &'a Value, re
         let exists = chain.iter().enumerate().find_map(|(i, v)| if v == &current_value { Some(i) } else { None });
 
         if let Some(index) = exists {
-            let base = reader - i - 1;
-            let modulo = chain.len();
+            // println!("{chain:?} ({current_value:?}) [{reader} | {i}]");
+
+            let base = reader + i + index + 1;
+            let modulo = chain.len() - index;
             let chain_index = base % modulo + index;
-            // println!("{:?}", chain);
-            // println!("{base} % {modulo} + {index} = {chain_index}");
 
             return chain[chain_index];
         }
