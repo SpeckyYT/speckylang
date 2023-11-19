@@ -1,11 +1,12 @@
-use std::time::Instant;
+use std::time::{Instant, Duration};
 
 use fnv::FnvHashMap;
-use num_bigint::{TryFromBigIntError, BigInt};
 
 type SpeckyDataContainer<V> = FnvHashMap<Value, V>;
 
 use crate::ast::{Statements, Statement, Value, LogKind, Integer, Float};
+
+const NULL: Value = Value::Null;
 
 pub struct RunOutput {
     pub stdout: String,
@@ -20,6 +21,8 @@ pub fn run(parsed: &Statements) -> RunOutput {
 
     let mut line_index = 0;
 
+    let mut max_time: (Duration, Statement) = (Duration::ZERO, Statement::Truthy(0));
+
     let mut output = String::new();
     loop {
         if line_index >= parsed.len() { break; }
@@ -33,14 +36,20 @@ pub fn run(parsed: &Statements) -> RunOutput {
                                 #[allow(unused_macros)]
                                 macro_rules! operand {
                                     () => {
-                                        {
-                                            let mut final_value = &$expr.value;
-                                            for _ in 0..$expr.reader {
-                                                final_value = variables.get(&final_value).unwrap_or(&Value::Null)
-                                            }
-                                            final_value
-                                        }
+                                        value_reader(&variables, &$expr.value, $expr.reader)
                                     };
+                                }
+
+                                #[allow(unused_macros)]
+                                macro_rules! condition_jump {
+                                    ($condition:expr, $quantity:expr) => {
+                                        {
+                                            let value = variables.get(&current_pointer).unwrap_or(&Value::Null);
+                                            #[allow(clippy::redundant_closure)]
+                                            #[allow(clippy::redundant_closure_call)]
+                                            if !$condition(value) { line_index += $quantity; }
+                                        }
+                                    }
                                 }
                             )?
             
@@ -66,6 +75,8 @@ pub fn run(parsed: &Statements) -> RunOutput {
             (@pat $ident:ident $(())?) => { Statement::$ident };
             (@pat $ident:ident $expr:tt) => { Statement::$ident $expr };
         }
+
+        let start_operation = Instant::now();
 
         match_statement! {
             Load(expr) => {
@@ -100,7 +111,7 @@ pub fn run(parsed: &Statements) -> RunOutput {
                 left_right_operator!(|left, right| {
                     match (left, right) {
                         (Value::Text(string), Value::Integer(integer)) => {
-                            let int: Result<usize, TryFromBigIntError<BigInt>> = integer.try_into();
+                            let int: Result<usize, _> = integer.try_into();
                             if let Ok(int) = int {
                                 if let Some(ch) = string.chars().nth(int) {
                                     Value::Text(ch.to_string())
@@ -242,40 +253,18 @@ pub fn run(parsed: &Statements) -> RunOutput {
                     }
                 });
             },
-            Truthy(quantity) => {
-                let value = variables.get(&current_pointer).unwrap_or(&Value::Null);
-                if !value_is_truthy(value) {
-                    line_index += quantity;
-                }
-            },
-            Falsy(quantity) => {
-                let value = variables.get(&current_pointer).unwrap_or(&Value::Null);
-                if value_is_truthy(value) {
-                    line_index += quantity;
-                }
-            },
-            Exists(quantity) => {
-                let value = variables.get(&current_pointer).unwrap_or(&Value::Null);
-                if !value_exists(value) {
-                    line_index += quantity; 
-                }
-            },
-            Empty(quantity) => {
-                let value = variables.get(&current_pointer).unwrap_or(&Value::Null);
-                if value_exists(value) {
-                    line_index += quantity;
-                }
-            },
+            Truthy(quantity) => { condition_jump!(|value| value_is_truthy(value), quantity); },
+            Falsy(quantity) => { condition_jump!(|value| !value_is_truthy(value), quantity); },
+            Exists(quantity) => { condition_jump!(|value| value_exists(value), quantity); },
+            Empty(quantity) => { condition_jump!(|value| !value_exists(value), quantity); },
             Log { kind, reader, special, reverse, newline, space, vertical, assign } => {
                 let string = if let Some(kind) = kind {
-                    let mut print = match kind {
+                    let print = match kind {
                         LogKind::Value => variables.get(&current_pointer).unwrap_or(&Value::Null),
                         LogKind::Pointer => &current_pointer,
                     };
 
-                    for _ in 0..*reader {
-                        print = variables.get(&print).unwrap_or(&Value::Null);
-                    }
+                    let print = value_reader(&variables, print, *reader);
 
                     value_to_string(print, *special).to_string()
                 } else {
@@ -324,14 +313,46 @@ pub fn run(parsed: &Statements) -> RunOutput {
             },
         }
 
+        if start_operation.elapsed() > max_time.0 {
+            max_time = (start_operation.elapsed(), parsed[line_index].clone())
+        }
+
         line_index += 1;
     }
+    
+    // println!("he be named max and doing the minimum: {:?}", max_time);
 
     RunOutput {
         stdout: output,
         variables,
         jump_addresses,
     }
+}
+
+fn value_reader<'a>(memory: &'a SpeckyDataContainer<Value>, value: &'a Value, reader: usize) -> &'a Value {
+    let mut chain: Vec<&Value> = vec![value];
+
+    let mut current_value = value;
+
+    for i in 0..reader {
+        current_value = memory.get(current_value).unwrap_or(&NULL);
+
+        let exists = chain.iter().enumerate().find_map(|(i, v)| if v == &current_value { Some(i) } else { None });
+
+        if let Some(index) = exists {
+            let base = reader - i - 1;
+            let modulo = chain.len();
+            let chain_index = base % modulo + index;
+            // println!("{:?}", chain);
+            // println!("{base} % {modulo} + {index} = {chain_index}");
+
+            return chain[chain_index];
+        }
+
+        chain.push(current_value);
+    }
+
+    current_value
 }
 
 fn value_to_string(value: &Value, special: bool) -> String {
@@ -346,7 +367,7 @@ fn value_to_string(value: &Value, special: bool) -> String {
         (Value::Integer(i), true) =>
             i.try_into()
             .ok()
-            .and_then(|i| char::from_u32(i))
+            .and_then(char::from_u32)
             .map(|c| c.to_string())
             .unwrap_or_else(|| char::REPLACEMENT_CHARACTER.to_string()),
 
@@ -354,7 +375,7 @@ fn value_to_string(value: &Value, special: bool) -> String {
         (Value::Float(f), true) => f.to_f64().to_string(),
 
         (Value::Text(s), false) => format!("/{}/", s.replace('/', r"\/")),
-        (Value::Text(s), true) => format!("{s}"),
+        (Value::Text(s), true) => s.to_string(),
 
         (Value::Time(d), false) => format!("{:?}", d.elapsed()),
         (Value::Time(d), true) => format!("{}", d.elapsed().as_secs_f64()),

@@ -57,9 +57,7 @@ impl<'a> Parser<'a> {
                 
                 let chars = slice[1..slice.len()-1].chars().collect::<Vec<char>>();
 
-                for i in 0..chars.len() {
-                    let char = chars[i];
-
+                for (i, char) in chars.iter().enumerate() {
                     if is_escape {
                         text.push_str(match char {
                             'r' => "\r",
@@ -72,12 +70,10 @@ impl<'a> Parser<'a> {
                                 area: CodeArea::from_span(i..i+1),
                             }),
                         })
+                    } else if char == &'\\' {
+                        is_escape = true
                     } else {
-                        if char == '\\' {
-                            is_escape = true
-                        } else {
-                            text.push(char)
-                        }
+                        text.push(*char)
                     }
                 }
                 

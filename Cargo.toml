@@ -9,6 +9,7 @@ edition = "2021"
 clap = { version = "4.4.6", features = ["derive"] }
 colored = "2.0.4"
 fnv = "1.0.7"
+itertools = "0.12.0"
 logos = "0.13.0"
 lyneate = "0.2.0"
 num-bigfloat = { git = "https://github.com/SpeckyYT/num-bigfloat", version = "1.7.0" }

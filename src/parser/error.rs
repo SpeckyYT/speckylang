@@ -47,7 +47,7 @@ pub fn print_error(code: &str, error: ParsingError) {
         [
             (
                 area.0..area.1,
-                format!("shit"),
+                "shit".to_string(),
                 (255,0,100)
             )
         ]
