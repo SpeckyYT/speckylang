@@ -1,27 +1,34 @@
 use crate::test_read;
 use crate::test_run;
 
+const MAX_BOTTLES: usize = 99;
+
 #[test]
 fn bottles_of_beer() {
     let output = test_run!(test_read!("test/99-bottles-of-beer.specky"));
 
-    let expected = (1..100).rev()
-        .map(|i| [
-            i.to_string(),
-            "/bottles of beer on the wall,/".to_string(),
-            i.to_string(),
-            "/bottles of beer./".to_string(),
-            "/Take one down, pass it around,/".to_string(),
-            (i-1).to_string(),
-            "/bottles of beer on the wall,/".to_string(),
-            "//".to_string(),
-            "".to_string(),
-        ].join("\n"))
-        .collect::<String>();
+    let expected = (1..=MAX_BOTTLES).rev()
+        .map(|i| {
+            let d = i - 1;
+            let s = if i == 1 { "" } else { "s" };
+            [
+                format!("{i} bottle{s} of beer on the wall,"),
+                format!("{i} bottle{s} of beer."),
+                "Take one down, pass it around,".to_string(),
+                format!("{d} bottle{} of beer on the wall,", if d == 1 { "" } else { "s" }),
+                "".to_string(),
+                "".to_string(),
+            ].join("\n")
+        })
+        .collect::<String>() + &[
+            "No bottles of beer on the wall,",
+            "No bottles of beer.",
+            "Go to the store, buy some more,",
+            &format!("{MAX_BOTTLES} bottle{} of beer on the wall.", if MAX_BOTTLES == 1 { "" } else { "s" }),
+            "",
+        ].join("\n");
 
-    assert!(
-        output.stdout.contains(&expected)
-    )
+    assert_eq!(output.stdout, expected)
 }
 
 #[test]

@@ -1,29 +1,40 @@
-|< first_line <= /bottles of beer on the wall,/
-|< second_line <= /bottles of beer./
+|< bottle <= /bottle/
+|< first_line <= /of beer on the wall,/
+|< second_line <= /of beer./
 |< third_line <= /Take one down, pass it around,/
-|< empty <= //
 
 |< infinite_loop <= false
 
 |< amount <= 99
 
+|< bottles <= §bottle
+|< temp <= §amount = 1 !! |< bottles + /s/
+
 [<] loop
 
-|< amount {%}
-|< first_line {%}
-|< amount {%}
-|< second_line {%}
-|< third_line {%}
-|< amount - 1 {%}
-|< first_line {%}
+|< amount {%\°}
+|< bottles {%$\°}
+|< first_line {%$}
 
-|< empty {%}
+|< amount {%\°}
+|< bottles {%$\°}
+|< second_line {%$}
+
+|< third_line {%$}
+
+|< amount - 1 {%\°}
+|< bottles <= §bottle
+|< temp <= §amount = 1 !! |< bottles + /s/
+
+|< bottles {%$\°}
+|< first_line {%$}
+{}
 
 |< amount ? [>] loop
 
-|< /No bottles of beer on the wall,/ <= /No bottles of beer./ {@} {%}
-<= /Go to the store, buy some more,/ {%}
-|< amount <= 99 {%}
-|< /bottles of beer on the wall./ {@}
+|< /No bottles of beer on the wall,/ <= /No bottles of beer./ {@$} {%$}
+<= /Go to the store, buy some more,/ {%$}
+|< amount <= 99 {%\°}
+|< /bottles of beer on the wall./ {@$}
 
 |< infinite_loop ? [>] loop
