@@ -11,12 +11,10 @@ const NULL: Value = Value::Null;
 pub struct RunOutput {
     pub stdout: String,
     pub variables: SpeckyDataContainer<Value>,
-    pub jump_addresses: SpeckyDataContainer<usize>,
 }
 
 pub fn run(parsed: &Statements) -> RunOutput {
     let mut variables: SpeckyDataContainer<Value> = SpeckyDataContainer::default();
-    let mut jump_addresses: SpeckyDataContainer<usize> = SpeckyDataContainer::default();
     let mut current_pointer: Value = Value::Null;
 
     let mut line_index = 0;
@@ -83,10 +81,10 @@ pub fn run(parsed: &Statements) -> RunOutput {
                 current_pointer = operand!().clone();
             },
             Define(expr) => {
-                jump_addresses.insert(operand!().clone(), line_index);
+                variables.insert(operand!().clone(), Value::JumpAddress(line_index));
             },
             Jump(expr) => {
-                if let Some(index) = jump_addresses.get(operand!()) {
+                if let Some(Value::JumpAddress(index)) = variables.get(operand!()) {
                     line_index = *index
                 }
             },
@@ -325,7 +323,6 @@ pub fn run(parsed: &Statements) -> RunOutput {
     RunOutput {
         stdout: output,
         variables,
-        jump_addresses,
     }
 }
 
@@ -382,6 +379,9 @@ fn value_to_string(value: &Value, special: bool) -> String {
 
         (Value::Null, false) => "null".to_string(),
         (Value::Null, true) => "\0".to_string(),
+
+        (Value::JumpAddress(a), false) => a.to_string(),
+        (Value::JumpAddress(a), true) => format!("{:b}", a),
     }
 }
 
@@ -394,6 +394,7 @@ fn value_is_truthy(value: &Value) -> bool {
         Value::Text(s) => !s.is_empty(),
         Value::Time(_) => true,
         Value::Null => false,
+        Value::JumpAddress(_) => true
     }
 }
 

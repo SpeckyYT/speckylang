@@ -9,6 +9,7 @@ pub type Float = BigFloat;
 
 #[derive(Debug, Hash, PartialEq, Eq, Clone)]
 pub enum Value {
+    JumpAddress(usize),
     Symbol(String),
     Boolean(bool),
     Integer(Integer),

@@ -55,8 +55,6 @@ impl<'a> Parser<'a> {
 
         match_operation!(
             Load => Load(Expression),
-            Define => Define(Expression),
-            Jump => Jump(Expression),
             Assign => Assign(Expression),
             Overwrite => Overwrite(Expression),
             Swap => Swap(Expression),
@@ -85,6 +83,44 @@ impl<'a> Parser<'a> {
             Empty => Empty(Sequential),
 
             #
+
+            SquareBracketOpen => {
+                // Define => Define(Expression),
+                // Jump => Jump(Expression),
+
+                let mut kind = None;
+
+                enum JumpKind {
+                    Define,
+                    Jump,
+                }
+
+                loop {
+                    let token = self.next()?;
+                    match token {
+                        Token::LessThan => kind = Some(JumpKind::Define),   // <
+                        Token::GreaterThan => kind = Some(JumpKind::Jump),  // >
+                        Token::SquareBracketClose => break,
+                        _ => return Err(ParsingError::SyntaxError {
+                            expected: "jump option".to_string(),
+                            found: token,
+                            area: CodeArea::from_span(self.span()),
+                        })
+                    }
+                }
+
+                let expression = self.parse_expression()?;
+
+                match kind {
+                    Some(JumpKind::Define) => Ok(Statement::Define(expression)),
+                    Some(JumpKind::Jump) => Ok(Statement::Jump(expression)),
+                    None => Err(ParsingError::SyntaxError {
+                        expected: "`>` or `<` inside of the []".to_string(),
+                        found: Token::Mu,
+                        area: CodeArea::from_span(self.span()),
+                    })
+                }
+            },
 
             CurlyBracketOpen => {
                 let mut kind = None;

@@ -5,10 +5,6 @@ pub enum Token {
     // <operator> <value>
     #[token("|<")]
     Load,
-    #[token("[<]")]
-    Define,
-    #[token("[>]")]
-    Jump,
     #[token("<=")]
     Assign,
     #[token("=>")]
@@ -62,6 +58,10 @@ pub enum Token {
     CurlyBracketOpen,
     #[token("}")]
     CurlyBracketClose,
+    #[token("[")]
+    SquareBracketOpen,
+    #[token("]")]
+    SquareBracketClose,
 
     #[token("@")]
     At,
