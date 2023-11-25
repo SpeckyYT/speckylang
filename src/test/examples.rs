@@ -77,9 +77,11 @@ fn brainfuck() {
 
     let run = |instructions: &str, debug: bool| {
         test_run!(
-            string
-            .replace("{INPUT}", instructions)
-            .replace("{DEBUG}", &debug.to_string())
+            string,
+            [
+                crate::ast::Statement::Assign(crate::ast::Expression { value: crate::ast::Value::Text(instructions.to_string()), reader: 0 }),
+                crate::ast::Statement::Assign(crate::ast::Expression { value: crate::ast::Value::Boolean(debug), reader: 0 })
+            ]
         ).stdout
     };
 

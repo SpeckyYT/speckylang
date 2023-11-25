@@ -10,13 +10,26 @@ macro_rules! test_read {
 
 #[macro_export]
 macro_rules! test_run {
-    ($string:expr) => {
+    ($string:expr $(, [$($input:expr),*])?) => {
         {
             let temp = &$string;
             let mut parser = crate::parser::Parser::new(temp);
-            let parsed = parser.parse_statements().unwrap();
+            #[allow(unused_mut)]
+            let mut parsed = parser.parse_statements().unwrap();
+
+            $($(
+                if let Some(index) = parsed.iter().position(|v| matches!(v, crate::ast::Statement::Input)) {
+                    parsed[index] = $input;
+                }
+            )*)?
+
             // println!("{:#?}", parsed);
-            crate::run::run(&parsed)
+            let mut ran = crate::run::run(&parsed);
+
+            ran.stdout = ran.stdout
+                .trim_start_matches("input your brainfuck program: do you want debug mode? ").to_string();
+
+            ran
         }
     };
 }

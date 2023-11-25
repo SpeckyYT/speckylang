@@ -1,5 +1,8 @@
-|< input <= /{INPUT}/
-|< debug <= {DEBUG}
+|< /input your brainfuck program:/ {@$\°}
+|< input '
+|< /do you want debug mode?/ {@$\°}
+|< debug '
+|< time <= µ
 
 ###############################################################################
 
@@ -25,18 +28,23 @@
     |< §address + 1
     |< temp <= §§address > 255 ??
         |< §address <= 0
+
 |< temp <= §current_instruction = /-/ ?? ???? ??
     |< §address - 1
     |< temp <= §§address < 0 ??
         |< §address <= 255
+
 |< temp <= §current_instruction = />/ ??
     |< address + 1
+    
 |< temp <= §current_instruction = /</ ??
     |< address - 1
+
 |< temp <= §current_instruction = /[/ ??? ?? ??
     |< temp <= /depth/ + depth
     |< §temp <= §instruction
     |< depth + 1
+
 |< temp <= §current_instruction = /]/ ???? ???? ??? ??? ??  ???? ??
     |< temp <= §depth > 0 ???? ??? ??? ??  ???? ??
         |< temp <= §§address = 0 !! !!! !!
@@ -45,8 +53,10 @@
             |< instruction <= §§temp
         |< temp <= §§address = 0 ??
             |< depth - 1
+
 |< temp <= §current_instruction = /./ ??
     |< §address {%$\}
+
 |< temp <= §current_instruction = /,/ ??
     |< /seme the fuck/ {@}
 
