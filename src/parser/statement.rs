@@ -82,6 +82,8 @@ impl<'a> Parser<'a> {
             Exists => Exists(Sequential),
             Empty => Empty(Sequential),
 
+            SingleQuote => Input(),
+
             #
 
             SquareBracketOpen => {

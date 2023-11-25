@@ -102,7 +102,7 @@ You should use an unique name / value for loops if you don't want to accidentall
 
 #### Math
 
-Math operations always get beformed with the value of the poinder as the left operand, and the following expression as the right operand.
+Math operations always get beformed with the value of the pointer as the left operand, and the following expression as the right operand.
 The output of the operation will be inserted into the current pointer value.
 
 If the inputs are invalid for the specific operation, it will output `null`.

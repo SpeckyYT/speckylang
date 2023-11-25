@@ -1,4 +1,5 @@
 use std::time::{Instant, Duration};
+use std::io::{self, Write};
 
 use fnv::FnvHashMap;
 
@@ -8,6 +9,7 @@ use crate::ast::{Statements, Statement, Value, LogKind, Integer, Float};
 
 const NULL: Value = Value::Null;
 
+#[derive(Debug)]
 pub struct RunOutput {
     pub stdout: String,
     pub variables: SpeckyDataContainer<Value>,
@@ -34,7 +36,7 @@ pub fn run(parsed: &Statements) -> RunOutput {
                                 #[allow(unused_macros)]
                                 macro_rules! operand {
                                     () => {
-                                        value_reader(&variables, &$expr.value, $expr.reader)
+                                        value_reader(&variables, &$expr.value, $expr.reader).clone()
                                     };
                                 }
 
@@ -54,10 +56,11 @@ pub fn run(parsed: &Statements) -> RunOutput {
                             #[allow(unused_macros)]
                             macro_rules! left_right_operator {
                                 ($callback:expr) => {
+                                    let current_operand = operand!();
                                     let left = variables.get(&current_pointer).unwrap_or(&Value::Null).clone();
-                                    let right = match operand!() {
-                                        Value::Symbol(_) => variables.get(operand!()).unwrap_or(&Value::Null).clone(),
-                                        _ => operand!().clone(),
+                                    let right = match current_operand {
+                                        Value::Symbol(_) => variables.get(&current_operand).unwrap_or(&Value::Null).clone(),
+                                        _ => current_operand.clone(),
                                     };
                                     #[allow(clippy::redundant_closure_call)]
                                     let result = $callback(left, right);
@@ -84,7 +87,7 @@ pub fn run(parsed: &Statements) -> RunOutput {
                 variables.insert(operand!().clone(), Value::JumpAddress(line_index));
             },
             Jump(expr) => {
-                if let Some(Value::JumpAddress(index)) = variables.get(operand!()) {
+                if let Some(Value::JumpAddress(index)) = variables.get(&operand!()) {
                     line_index = *index
                 }
             },
@@ -101,9 +104,10 @@ pub fn run(parsed: &Statements) -> RunOutput {
                 variables.insert(operand!().clone(), current_pointer.clone());
             },
             Swap(expr) => {
+                let current_operand = operand!();
                 let temp = variables.get(&current_pointer).unwrap_or(&Value::Null).clone();
-                variables.insert(current_pointer.clone(), variables.get(operand!()).unwrap_or(&Value::Null).clone());
-                variables.insert(operand!().clone(), temp);
+                variables.insert(current_pointer.clone(), variables.get(&current_operand).unwrap_or(&Value::Null).clone());
+                variables.insert(current_operand.clone(), temp);
             },
             Index(expr) => {
                 left_right_operator!(|left, right| {
@@ -309,6 +313,9 @@ pub fn run(parsed: &Statements) -> RunOutput {
 
                 output.push_str(&string);
             },
+            Input() => {
+                variables.insert(current_pointer.clone(), value_input());
+            },
         }
 
         if start_operation.elapsed() > max_time.0 {
@@ -324,6 +331,35 @@ pub fn run(parsed: &Statements) -> RunOutput {
         stdout: output,
         variables,
     }
+}
+
+fn value_input() -> Value {
+    let _ = io::stdout().flush();
+    let mut s = String::new();
+    io::stdin().read_line(&mut s).unwrap_or(0);
+    string_to_value(&s)
+}
+
+fn string_to_value(string: &str) -> Value {
+    let string = string.trim();
+
+    if string.chars().all(|c| char::is_ascii_digit(&c)) {
+        return Value::Integer(string.parse::<Integer>().unwrap())
+    }
+
+    if string.chars().filter(|c| c == &'.').count() == 2 {
+        return Value::Float(string.parse::<Float>().unwrap())
+    }
+
+    return match string {
+        "true" => Value::Boolean(true),
+        "false" => Value::Boolean(false),
+        "null" => Value::Null,
+        "µ" => Value::Time(Instant::now()),
+        string if string.chars().all(|c| c.is_ascii_alphanumeric() || c == '_') =>
+            Value::Symbol(string.to_string()),
+        string => Value::Text(string.to_string()),
+    };
 }
 
 fn value_reader<'a>(memory: &'a SpeckyDataContainer<Value>, value: &'a Value, reader: usize) -> &'a Value {

@@ -38,6 +38,7 @@ pub enum Statement {
     And(Expression),
     Or(Expression),
     Xor(Expression),
+
     Plus(Expression),
     Minus(Expression),
     Times(Expression),
@@ -67,6 +68,8 @@ pub enum Statement {
         vertical: bool,
         assign: bool,
     },
+
+    Input,
 }
 
 #[derive(Debug, Clone)]

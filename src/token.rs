@@ -71,11 +71,13 @@ pub enum Token {
     Tilde,
 
     // <operator> <unaryoperator> <value>
+    #[token("'")]
+    SingleQuote,
     #[token("§")]
     Reader,
 
     // symbol
-    #[regex("[a-zA-Z_][a-zA-Z0-9_]*")]
+    #[regex("[a-zA-Z0-9_]+")]
     Symbol,
 
     // value
@@ -89,7 +91,7 @@ pub enum Token {
     Mu,
     #[regex(r"/(?:\.|[^/])*/")]
     StringLiteral,
-    #[regex(r"[0-9]+")]
+    #[regex(r"[0-9]+", priority = 2)]
     IntegerLiteral,
     #[regex(r"[0-9]+\.[0-9]+")]
     FloatLiteral,
