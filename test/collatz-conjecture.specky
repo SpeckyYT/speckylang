@@ -1,0 +1,25 @@
+<= /input a number:/ {%$\°}
+|< current_number '
+
+|< max <= 0
+|< steps <= 0
+
+{%}
+
+[<] collatzConjecture
+
+|< temp <= §current_number % 2 = 0 ??
+    |< current_number \ 2
+!!!
+    |< current_number * 3 + 1
+
+{%}
+
+|< steps + 1
+|< temp <= §max < §current_number ?? |< max <= §current_number
+|< temp <= §current_number = 1 !
+
+[>] collatzConjecture
+
+|< steps {@\°} {%}
+|< max {@\°} {%}
