@@ -139,6 +139,7 @@ impl<'a> Parser<'a> {
                     match token {
                         Token::Percent => kind = Some(ast::LogKind::Value),
                         Token::At => kind = Some(ast::LogKind::Pointer),
+                        Token::Asterisk => kind = Some(ast::LogKind::Type),
                         Token::Reader => reader += 1,
                         Token::Exists => special = !special,
                         Token::Tilde => reverse = !reverse,

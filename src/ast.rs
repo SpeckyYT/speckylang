@@ -6,6 +6,7 @@ use num_bigfloat::BigFloat;
 pub type Text = String;
 pub type Integer = BigInt;
 pub type Float = BigFloat;
+pub type SmallInt = i128;
 
 #[derive(Debug, Hash, PartialEq, Eq, Clone)]
 pub enum Value {
@@ -13,6 +14,7 @@ pub enum Value {
     Symbol(String),
     Boolean(bool),
     Integer(Integer),
+    SmallInt(SmallInt),
     Float(Float),
     Text(Text),
     Time(Instant),
@@ -72,10 +74,21 @@ pub enum Statement {
     Input,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub enum LogKind {
     Value,
     Pointer,
+    Type,
+}
+
+impl LogKind {
+    pub fn reader_count(&self) -> usize {
+        match self {
+            LogKind::Pointer => 0,
+            LogKind::Value => 1,
+            LogKind::Type => 0,
+        }
+    }
 }
 
 pub type Statements = Vec<Statement>;

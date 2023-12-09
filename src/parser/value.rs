@@ -1,6 +1,6 @@
 use std::time::Instant;
 
-use crate::{ast::{self, Float, Integer}, token::Token};
+use crate::{ast::{self, Float, Integer, SmallInt}, token::Token};
 
 use super::{Parser, ParseResult, ParsingError, error::CodeArea};
 
@@ -29,9 +29,10 @@ impl<'a> Parser<'a> {
                         Token::Minus => negative = !negative,
                         Token::IntegerLiteral => {
                             let integer = self.slice()
-                                .parse::<Integer>()
-                                .unwrap(); // should be unreachable in theory
-                            return Ok(ast::Value::Integer(if negative { -integer } else { integer }))
+                                .parse::<SmallInt>()
+                                .map(|i| ast::Value::SmallInt(if negative { -i } else { i }))
+                                .unwrap_or(ast::Value::Integer(self.slice().parse::<Integer>().unwrap()));
+                            return Ok(integer)
                         },
                         Token::FloatLiteral => {
                             let float = self.slice()

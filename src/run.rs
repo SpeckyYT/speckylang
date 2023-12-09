@@ -5,7 +5,7 @@ use fnv::FnvHashMap;
 
 type SpeckyDataContainer<V> = FnvHashMap<Value, V>;
 
-use crate::ast::{Statements, Statement, Value, LogKind, Integer, Float};
+use crate::ast::{Statements, Statement, Value, LogKind, Integer, Float, SmallInt};
 
 const NULL: Value = Value::Null;
 
@@ -26,6 +26,8 @@ pub fn run(parsed: &Statements) -> RunOutput {
     let mut output = String::new();
     loop {
         if line_index >= parsed.len() { break; }
+
+        let mut changed_pointer = false;
 
         macro_rules! match_statement {
             { $($statement:ident $($expr:tt)? => $code:tt $(,)?)* } => {
@@ -82,6 +84,7 @@ pub fn run(parsed: &Statements) -> RunOutput {
         match_statement! {
             Load(expr) => {
                 current_pointer = operand!().clone();
+                changed_pointer = true;
             },
             Define(expr) => {
                 variables.insert(operand!().clone(), Value::JumpAddress(line_index));
@@ -112,9 +115,13 @@ pub fn run(parsed: &Statements) -> RunOutput {
             Index(expr) => {
                 left_right_operator!(|left, right| {
                     match (left, right) {
-                        (Value::Text(string), Value::Integer(integer)) => {
-                            let int: Result<usize, _> = integer.try_into();
-                            if let Ok(int) = int {
+                        (Value::Text(string), right) => {
+                            let integer: Option<usize> = match right {
+                                Value::Integer(int) => int.try_into().ok(),
+                                Value::SmallInt(int) => int.try_into().ok(),
+                                _ => return Value::Null,
+                            };
+                            if let Some(int) = integer {
                                 if let Some(ch) = string.chars().nth(int) {
                                     Value::Text(ch.to_string())
                                 } else {
@@ -156,9 +163,13 @@ pub fn run(parsed: &Statements) -> RunOutput {
             Plus(expr) => {
                 left_right_operator!(|left, right|{
                     match (left, right) {
-                        (Value::Integer(left), Value::Integer(right)) => Value::Integer(left + &right),
+                        (Value::Integer(left), Value::Integer(right)) => compress_integer(left + &right),
+                        (Value::SmallInt(left), Value::SmallInt(right)) => Value::SmallInt(left + &right),
+                        (Value::Integer(left), Value::SmallInt(right)) => compress_integer(left + Integer::from(right)),
+                        (Value::SmallInt(left), Value::Integer(right)) => compress_integer(Integer::from(left) + &right),
                         (Value::Text(left), Value::Text(right)) => Value::Text(left + &right),
                         (Value::Text(left), Value::Integer(right)) => Value::Text(left + &right.to_string()),
+                        (Value::Text(left), Value::SmallInt(right)) => Value::Text(left + &right.to_string()),
                         (Value::Float(left), Value::Float(right)) => Value::Float(left + right),
                         _ => Value::Null,
                     }
@@ -167,7 +178,13 @@ pub fn run(parsed: &Statements) -> RunOutput {
             Minus(expr) => {
                 left_right_operator!(|left, right|{
                     match (left, right) {
-                        (Value::Integer(left), Value::Integer(right)) => Value::Integer(left - &right),
+                        (Value::Integer(left), Value::Integer(right)) => compress_integer(left - &right),
+                        (Value::SmallInt(left), Value::SmallInt(right)) =>
+                            left.checked_sub(right)
+                            .map(Value::SmallInt)
+                            .unwrap_or(Value::Integer(Integer::from(left) - Integer::from(right))),
+                        (Value::Integer(left), Value::SmallInt(right)) => compress_integer(left - Integer::from(right)),
+                        (Value::SmallInt(left), Value::Integer(right)) => compress_integer(Integer::from(left) - right),
                         (Value::Float(left), Value::Float(right)) => Value::Float(left - right),
                         _ => Value::Null,
                     }
@@ -176,7 +193,12 @@ pub fn run(parsed: &Statements) -> RunOutput {
             Times(expr) => {
                 left_right_operator!(|left, right|{
                     match (left, right) {
-                        (Value::Integer(left), Value::Integer(right)) => Value::Integer(left * &right),
+                        (Value::Integer(left), Value::Integer(right)) => compress_integer(left * &right),
+                        (Value::SmallInt(left), Value::SmallInt(right)) => left.checked_mul(right)
+                            .map(Value::SmallInt)
+                            .unwrap_or(Value::Integer(Integer::from(left) * Integer::from(right))),
+                        (Value::SmallInt(left), Value::Integer(right)) => compress_integer(Integer::from(left) * right),
+                        (Value::Integer(left), Value::SmallInt(right)) => compress_integer(left * Integer::from(right)),
                         (Value::Float(left), Value::Float(right)) => Value::Float(left * right),
                         _ => Value::Null,
                     }
@@ -185,7 +207,10 @@ pub fn run(parsed: &Statements) -> RunOutput {
             Divide(expr) => {
                 left_right_operator!(|left, right|{
                     match (left, right) {
-                        (Value::Integer(left), Value::Integer(right)) => Value::Integer(left / &right),
+                        (Value::Integer(left), Value::Integer(right)) => compress_integer(left / &right),
+                        (Value::SmallInt(left), Value::SmallInt(right)) => Value::SmallInt(left / right),
+                        (Value::Integer(left), Value::SmallInt(right)) => compress_integer(left / &Integer::from(right)),
+                        (Value::SmallInt(left), Value::Integer(right)) => compress_integer(Integer::from(left) / &right),
                         (Value::Float(left), Value::Float(right)) => Value::Float(left / right),
                         _ => Value::Null,
                     }
@@ -194,7 +219,10 @@ pub fn run(parsed: &Statements) -> RunOutput {
             Modulo(expr) => {
                 left_right_operator!(|left, right|{
                     match (left, right) {
-                        (Value::Integer(left), Value::Integer(right)) => Value::Integer(left % &right),
+                        (Value::Integer(left), Value::Integer(right)) => compress_integer(left % &right),
+                        (Value::SmallInt(left), Value::SmallInt(right)) => Value::SmallInt(left % right),
+                        (Value::Integer(left), Value::SmallInt(right)) => compress_integer(left % &Integer::from(right)),
+                        (Value::SmallInt(left), Value::Integer(right)) => compress_integer(Integer::from(left) % &right),
                         (Value::Float(left), Value::Float(right)) => Value::Float(left % right),
                         _ => Value::Null,
                     }
@@ -203,7 +231,10 @@ pub fn run(parsed: &Statements) -> RunOutput {
             Exponential(expr) => {
                 left_right_operator!(|left, right|{
                     match (left, right) {
-                        (Value::Integer(left), Value::Integer(right)) => Value::Integer(left.pow(right.try_into().unwrap())),
+                        (Value::Integer(left), Value::Integer(right)) => compress_integer(left.pow(right.try_into().unwrap())),
+                        (Value::SmallInt(left), Value::SmallInt(right)) => Value::SmallInt(left.pow(right.try_into().unwrap())),
+                        (Value::Integer(left), Value::SmallInt(right)) => compress_integer(left.pow(right.try_into().unwrap())),
+                        (Value::SmallInt(left), Value::Integer(right)) => compress_integer(Integer::from(left).pow(right.try_into().unwrap())),
                         (Value::Float(left), Value::Float(right)) => Value::Float(left.pow(&right)),
                         _ => Value::Null,
                     }
@@ -219,6 +250,9 @@ pub fn run(parsed: &Statements) -> RunOutput {
                 left_right_operator!(|left, right|{
                     match (left, right) {
                         (Value::Integer(left), Value::Integer(right)) => Value::Boolean(left < right),
+                        (Value::SmallInt(left), Value::SmallInt(right)) => Value::Boolean(left < right),
+                        (Value::SmallInt(left), Value::Integer(right)) => Value::Boolean(Integer::from(left) < right),
+                        (Value::Integer(left), Value::SmallInt(right)) => Value::Boolean(left < Integer::from(right)),
                         (Value::Text(left), Value::Text(right)) => Value::Boolean(left < right),
                         (Value::Float(left), Value::Float(right)) => Value::Boolean(left < right),
                         _ => Value::Null,
@@ -229,6 +263,9 @@ pub fn run(parsed: &Statements) -> RunOutput {
                 left_right_operator!(|left, right|{
                     match (left, right) {
                         (Value::Integer(left), Value::Integer(right)) => Value::Boolean(left > right),
+                        (Value::SmallInt(left), Value::SmallInt(right)) => Value::Boolean(left > right),
+                        (Value::SmallInt(left), Value::Integer(right)) => Value::Boolean(Integer::from(left) > right),
+                        (Value::Integer(left), Value::SmallInt(right)) => Value::Boolean(left > Integer::from(right)),
                         (Value::Text(left), Value::Text(right)) => Value::Boolean(left > right),
                         (Value::Float(left), Value::Float(right)) => Value::Boolean(left > right),
                         _ => Value::Null,
@@ -239,6 +276,9 @@ pub fn run(parsed: &Statements) -> RunOutput {
                 left_right_operator!(|left, right|{
                     match (left, right) {
                         (Value::Integer(left), Value::Integer(right)) => Value::Boolean(left <= right),
+                        (Value::SmallInt(left), Value::SmallInt(right)) => Value::Boolean(left <= right),
+                        (Value::SmallInt(left), Value::Integer(right)) => Value::Boolean(Integer::from(left) <= right),
+                        (Value::Integer(left), Value::SmallInt(right)) => Value::Boolean(left <= Integer::from(right)),
                         (Value::Text(left), Value::Text(right)) => Value::Boolean(left <= right),
                         (Value::Float(left), Value::Float(right)) => Value::Boolean(left <= right),
                         _ => Value::Null,
@@ -249,6 +289,9 @@ pub fn run(parsed: &Statements) -> RunOutput {
                 left_right_operator!(|left, right|{
                     match (left, right) {
                         (Value::Integer(left), Value::Integer(right)) => Value::Boolean(left >= right),
+                        (Value::SmallInt(left), Value::SmallInt(right)) => Value::Boolean(left >= right),
+                        (Value::SmallInt(left), Value::Integer(right)) => Value::Boolean(Integer::from(left) >= right),
+                        (Value::Integer(left), Value::SmallInt(right)) => Value::Boolean(left >= Integer::from(right)),
                         (Value::Text(left), Value::Text(right)) => Value::Boolean(left >= right),
                         (Value::Float(left), Value::Float(right)) => Value::Boolean(left >= right),
                         _ => Value::Null,
@@ -260,17 +303,26 @@ pub fn run(parsed: &Statements) -> RunOutput {
             Exists(quantity) => { condition_jump!(|value| value_exists(value), quantity); },
             Empty(quantity) => { condition_jump!(|value| !value_exists(value), quantity); },
             Log { kind, reader, special, reverse, newline, space, vertical, assign } => {
-                let string = if let Some(kind) = kind {
-                    let reader = reader + match kind {
-                        LogKind::Value => 1,
-                        LogKind::Pointer => 0,
-                    };
-
-                    let print = value_reader(&variables, &current_pointer, reader);
-
-                    value_to_string(print, *special).to_string()
-                } else {
-                    "".to_string()
+                let string = match kind {
+                    Some(LogKind::Pointer)|Some(LogKind::Value) => {
+                        let reader = kind.unwrap().reader_count() + reader;
+                        let print = value_reader(&variables, &current_pointer, reader);
+                        value_to_string(print, *special)
+                    },
+                    Some(LogKind::Type) => {
+                        match variables.get(&current_pointer).unwrap_or(&NULL) {
+                            Value::JumpAddress(_) => "JumpAddress",
+                            Value::Symbol(_) => "Symbol",
+                            Value::Boolean(_) => "Boolean",
+                            Value::Integer(_) => "Integer",
+                            Value::SmallInt(_) => "SmallInt",
+                            Value::Float(_) => "Float",
+                            Value::Text(_) => "Text",
+                            Value::Time(_) => "Time",
+                            Value::Null => "Null",
+                        }.to_string()
+                    },
+                    None => "".to_string(),
                 };
 
                 let string = if *reverse {
@@ -322,6 +374,8 @@ pub fn run(parsed: &Statements) -> RunOutput {
             max_time = (start_operation.elapsed(), parsed[line_index].clone())
         }
 
+        if changed_pointer { compress_value(&mut current_pointer) }
+
         line_index += 1;
     }
     
@@ -331,6 +385,23 @@ pub fn run(parsed: &Statements) -> RunOutput {
         stdout: output,
         variables,
     }
+}
+
+#[inline(always)]
+fn compress_value(value: &mut Value) {
+    if let Value::Integer(int) = &value {
+        let si = int.try_into();
+        if let Ok(si) = si { 
+            *value = Value::SmallInt(si);
+        }
+    };
+}
+
+#[inline(always)]
+fn compress_integer(integer: Integer) -> Value {
+    (&integer).try_into()
+    .map(Value::SmallInt)
+    .unwrap_or(Value::Integer(integer))
 }
 
 fn value_input() -> Value {
@@ -343,8 +414,14 @@ fn value_input() -> Value {
 fn string_to_value(string: &str) -> Value {
     let string = string.trim();
 
+    if string.is_empty() {
+        return Value::Null
+    }
+
     if string.chars().all(|c| char::is_ascii_digit(&c)) {
-        return Value::Integer(string.parse::<Integer>().unwrap())
+        return string.parse::<SmallInt>()
+            .map(Value::SmallInt)
+            .unwrap_or(Value::Integer(string.parse::<Integer>().unwrap()))
     }
 
     if string.chars().filter(|c| c == &'.').count() == 2 {
@@ -352,8 +429,8 @@ fn string_to_value(string: &str) -> Value {
     }
 
     return match string {
-        "true" => Value::Boolean(true),
-        "false" => Value::Boolean(false),
+        "true"|"on"|"yes" => Value::Boolean(true),
+        "false"|"off"|"no" => Value::Boolean(false),
         "null" => Value::Null,
         "µ" => Value::Time(Instant::now()),
         string if string.chars().all(|c| c.is_ascii_alphanumeric() || c == '_') =>
@@ -368,7 +445,32 @@ fn value_reader<'a>(memory: &'a SpeckyDataContainer<Value>, value: &'a Value, re
     let mut current_value = value;
 
     for i in 0..reader {
-        current_value = memory.get(current_value).unwrap_or(&NULL);
+        let temp_value: Value;
+
+        let current_pointer = match current_value {
+            Value::SmallInt(int) => {
+                temp_value = Value::Integer(Integer::from(*int));
+                if memory.contains_key(current_value) {
+                    current_value
+                } else {
+                    &temp_value
+                }
+            },
+            Value::Integer(int) => {
+                let small_form = int.try_into()
+                .map(Value::SmallInt);
+
+                if small_form.is_ok() && memory.contains_key(small_form.as_ref().unwrap()) {
+                    temp_value = small_form.unwrap();
+                    &temp_value
+                } else {
+                    current_value
+                }
+            },
+            other => other,
+        };
+
+        current_value = memory.get(current_pointer).unwrap_or(&NULL);
 
         let exists = chain.iter().enumerate().find_map(|(i, v)| if v == &current_value { Some(i) } else { None });
 
@@ -404,6 +506,14 @@ fn value_to_string(value: &Value, special: bool) -> String {
             .map(|c| c.to_string())
             .unwrap_or_else(|| char::REPLACEMENT_CHARACTER.to_string()),
 
+        (Value::SmallInt(i), false) => i.to_string(),
+        (Value::SmallInt(i), true) =>
+            (*i as u128).try_into()
+            .ok()
+            .and_then(char::from_u32)
+            .map(|c| c.to_string())
+            .unwrap_or_else(|| char::REPLACEMENT_CHARACTER.to_string()),
+
         (Value::Float(f), false) => f.to_string(),
         (Value::Float(f), true) => f.to_f64().to_string(),
 
@@ -426,6 +536,7 @@ fn value_is_truthy(value: &Value) -> bool {
         Value::Symbol(_) => true,
         Value::Boolean(b) => *b,
         Value::Integer(n) => *n != Integer::from(0),
+        Value::SmallInt(i) => *i != 0,
         Value::Float(f) => !f.is_nan() && !f.is_inf() && *f != Float::from(0.0),
         Value::Text(s) => !s.is_empty(),
         Value::Time(_) => true,
