@@ -8,7 +8,7 @@ pub type Integer = BigInt;
 pub type Float = BigFloat;
 pub type SmallInt = i128;
 
-#[derive(Debug, Hash, PartialEq, Eq, Clone)]
+#[derive(Debug, Hash, PartialEq, Eq, Clone, PartialOrd)]
 pub enum Value {
     JumpAddress(usize),
     Symbol(String),
@@ -79,6 +79,7 @@ pub enum LogKind {
     Value,
     Pointer,
     Type,
+    Memory,
 }
 
 impl LogKind {
@@ -86,6 +87,8 @@ impl LogKind {
         match self {
             LogKind::Pointer => 0,
             LogKind::Value => 1,
+
+            LogKind::Memory => 0,
             LogKind::Type => 0,
         }
     }

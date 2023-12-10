@@ -330,6 +330,32 @@ pub fn run(parsed: &Statements) -> RunOutput {
                             Value::Null => "Null",
                         }.to_string()
                     },
+                    Some(LogKind::Memory) => {
+                        let mut variables_string = String::new();
+                        variables_string += "{\n";
+
+                        let mut push_str = |key, value| {
+                            variables_string += &format!("\t{key:?} => {value:?}\n");
+                        };
+
+                        if *special {
+                            let mut sorted_vars = variables.iter().collect::<Vec<_>>();
+
+                            sorted_vars.sort_unstable_by(|(a,_), (b,_)| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
+
+                            for (key, value) in sorted_vars {
+                                push_str(key, value)
+                            }
+                        } else {
+                            for (key, value) in &variables {
+                                push_str(key, value)
+                            }
+                        };
+
+                        variables_string += "}";
+
+                        variables_string
+                    },
                     None => "".to_string(),
                 };
 
@@ -370,7 +396,6 @@ pub fn run(parsed: &Statements) -> RunOutput {
                 }
 
                 write!(w, "{string}").unwrap();
-
                 output.push_str(&string);
             },
             Input() => {

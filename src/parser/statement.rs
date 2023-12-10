@@ -139,7 +139,11 @@ impl<'a> Parser<'a> {
                     match token {
                         Token::Percent => kind = Some(ast::LogKind::Value),
                         Token::At => kind = Some(ast::LogKind::Pointer),
+
+                        // these two have a temporarily referred token, not sure if they'll ever get changed tho
                         Token::Asterisk => kind = Some(ast::LogKind::Type),
+                        Token::Plus => kind = Some(ast::LogKind::Memory),
+
                         Token::Reader => reader += 1,
                         Token::Exists => special = !special,
                         Token::Tilde => reverse = !reverse,
