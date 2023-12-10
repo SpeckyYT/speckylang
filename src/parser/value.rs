@@ -1,5 +1,3 @@
-use std::time::Instant;
-
 use crate::{ast::{self, Float, Integer, SmallInt}, token::Token};
 
 use super::{Parser, ParseResult, ParsingError, error::CodeArea};
@@ -90,7 +88,7 @@ impl<'a> Parser<'a> {
 
             Some(Token::Mu) => {
                 self.next()?;
-                Ok(ast::Value::Time(Instant::now()))
+                Ok(ast::Value::Time(None))
             }
 
             Some(Token::Null) => {

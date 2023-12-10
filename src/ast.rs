@@ -17,7 +17,7 @@ pub enum Value {
     SmallInt(SmallInt),
     Float(Float),
     Text(Text),
-    Time(Instant),
+    Time(Option<Instant>),
     Null,
 }
 

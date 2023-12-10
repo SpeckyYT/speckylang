@@ -17,17 +17,19 @@ pub struct RunOutput {
 
 pub fn run(parsed: &Statements) -> RunOutput {
     let mut variables: SpeckyDataContainer<Value> = SpeckyDataContainer::default();
-    let mut current_pointer: Value = Value::Null;
+    let mut current_pointer = Value::Null;
 
     let mut line_index = 0;
 
     let mut max_time: (Duration, Statement) = (Duration::ZERO, Statement::Truthy(0));
 
+    let stdout = io::stdout();
+    let lock = stdout.lock();
+    let mut w = io::BufWriter::new(lock);
     let mut output = String::new();
+
     loop {
         if line_index >= parsed.len() { break; }
-
-        let mut changed_pointer = false;
 
         macro_rules! match_statement {
             { $($statement:ident $($expr:tt)? => $code:tt $(,)?)* } => {
@@ -38,7 +40,7 @@ pub fn run(parsed: &Statements) -> RunOutput {
                                 #[allow(unused_macros)]
                                 macro_rules! operand {
                                     () => {
-                                        value_reader(&variables, &$expr.value, $expr.reader).clone()
+                                        value_reader(&variables, &$expr.value, $expr.reader)
                                     };
                                 }
 
@@ -84,33 +86,39 @@ pub fn run(parsed: &Statements) -> RunOutput {
         match_statement! {
             Load(expr) => {
                 current_pointer = operand!().clone();
-                changed_pointer = true;
+                compress_value(&mut current_pointer);
             },
             Define(expr) => {
                 variables.insert(operand!().clone(), Value::JumpAddress(line_index));
             },
             Jump(expr) => {
-                if let Some(Value::JumpAddress(index)) = variables.get(&operand!()) {
+                if let Some(Value::JumpAddress(index)) = variables.get(operand!()) {
                     line_index = *index
                 }
             },
             Assign(expr) => {
                 variables.insert(
                     current_pointer.clone(),
-                    match operand!().clone() {
-                        Value::Time(_) => Value::Time(Instant::now()),
-                        rest => rest,
-                    }
+                    match operand!() {
+                        Value::Time(time) => Value::Time(Some(time.unwrap_or(Instant::now()))),
+                        rest => rest.clone(),
+                    },
                 );
             },
             Overwrite(expr) => {
-                variables.insert(operand!().clone(), current_pointer.clone());
+                variables.insert(
+                    match operand!() {
+                        Value::Time(time) => Value::Time(Some(time.unwrap_or(Instant::now()))),
+                        rest => rest.clone(),
+                    },
+                    current_pointer.clone(),
+                );
             },
             Swap(expr) => {
-                let current_operand = operand!();
+                let current_operand = operand!().clone();
                 let temp = variables.get(&current_pointer).unwrap_or(&Value::Null).clone();
                 variables.insert(current_pointer.clone(), variables.get(&current_operand).unwrap_or(&Value::Null).clone());
-                variables.insert(current_operand.clone(), temp);
+                variables.insert(current_operand, temp);
             },
             Index(expr) => {
                 left_right_operator!(|left, right| {
@@ -164,7 +172,7 @@ pub fn run(parsed: &Statements) -> RunOutput {
                 left_right_operator!(|left, right|{
                     match (left, right) {
                         (Value::Integer(left), Value::Integer(right)) => compress_integer(left + &right),
-                        (Value::SmallInt(left), Value::SmallInt(right)) => Value::SmallInt(left + &right),
+                        (Value::SmallInt(left), Value::SmallInt(right)) => Value::SmallInt(left + right),
                         (Value::Integer(left), Value::SmallInt(right)) => compress_integer(left + Integer::from(right)),
                         (Value::SmallInt(left), Value::Integer(right)) => compress_integer(Integer::from(left) + &right),
                         (Value::Text(left), Value::Text(right)) => Value::Text(left + &right),
@@ -361,11 +369,12 @@ pub fn run(parsed: &Statements) -> RunOutput {
                     );
                 }
 
-                print!("{string}");
+                write!(w, "{string}").unwrap();
 
                 output.push_str(&string);
             },
             Input() => {
+                w.flush().unwrap();
                 variables.insert(current_pointer.clone(), value_input());
             },
         }
@@ -374,12 +383,10 @@ pub fn run(parsed: &Statements) -> RunOutput {
             max_time = (start_operation.elapsed(), parsed[line_index].clone())
         }
 
-        if changed_pointer { compress_value(&mut current_pointer) }
-
         line_index += 1;
     }
-    
-    // println!("he be named max and doing the minimum: {:?}", max_time);
+
+    w.flush().unwrap();
 
     RunOutput {
         stdout: output,
@@ -432,7 +439,7 @@ fn string_to_value(string: &str) -> Value {
         "true"|"on"|"yes" => Value::Boolean(true),
         "false"|"off"|"no" => Value::Boolean(false),
         "null" => Value::Null,
-        "µ" => Value::Time(Instant::now()),
+        "µ" => Value::Time(Some(Instant::now())),
         string if string.chars().all(|c| c.is_ascii_alphanumeric() || c == '_') =>
             Value::Symbol(string.to_string()),
         string => Value::Text(string.to_string()),
@@ -520,8 +527,8 @@ fn value_to_string(value: &Value, special: bool) -> String {
         (Value::Text(s), false) => format!("/{}/", s.replace('/', r"\/")),
         (Value::Text(s), true) => s.to_string(),
 
-        (Value::Time(d), false) => format!("{:?}", d.elapsed()),
-        (Value::Time(d), true) => format!("{}", d.elapsed().as_secs_f64()),
+        (Value::Time(d), false) => format!("{:?}", d.unwrap_or(Instant::now()).elapsed()),
+        (Value::Time(d), true) => format!("{}", d.unwrap_or(Instant::now()).elapsed().as_secs_f64()),
 
         (Value::Null, false) => "null".to_string(),
         (Value::Null, true) => "\0".to_string(),
