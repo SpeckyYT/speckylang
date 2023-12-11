@@ -63,3 +63,7 @@
 |< instruction + 1
 
 |< current_instruction ? [>] brainfuck
+
+|< debug ???
+    {+$}
+    |< time {%}

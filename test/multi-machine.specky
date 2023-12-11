@@ -7,7 +7,7 @@
 
 [<] /while b is not 0/
 |< c
-+ a
++ §a
 |< b
 - 1
 ?

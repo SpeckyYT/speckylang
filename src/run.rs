@@ -60,12 +60,8 @@ pub fn run(parsed: &Statements) -> RunOutput {
                             #[allow(unused_macros)]
                             macro_rules! left_right_operator {
                                 ($callback:expr) => {
-                                    let current_operand = operand!();
+                                    let right = operand!().clone();
                                     let left = variables.get(&current_pointer).unwrap_or(&Value::Null).clone();
-                                    let right = match current_operand {
-                                        Value::Symbol(_) => variables.get(&current_operand).unwrap_or(&Value::Null).clone(),
-                                        _ => current_operand.clone(),
-                                    };
                                     #[allow(clippy::redundant_closure_call)]
                                     let result = $callback(left, right);
                                     variables.insert(current_pointer.clone(), result);
@@ -436,6 +432,7 @@ fn compress_integer(integer: Integer) -> Value {
     .unwrap_or(Value::Integer(integer))
 }
 
+#[inline(always)]
 fn value_input() -> Value {
     let _ = io::stdout().flush();
     let mut s = String::new();
@@ -443,6 +440,7 @@ fn value_input() -> Value {
     string_to_value(&s)
 }
 
+#[inline(always)]
 fn string_to_value(string: &str) -> Value {
     let string = string.trim();
 
@@ -563,6 +561,7 @@ fn value_to_string(value: &Value, special: bool) -> String {
     }
 }
 
+#[inline(always)]
 fn value_is_truthy(value: &Value) -> bool {
     match value {
         Value::Symbol(_) => true,
@@ -577,6 +576,7 @@ fn value_is_truthy(value: &Value) -> bool {
     }
 }
 
+#[inline(always)]
 fn value_exists(value: &Value) -> bool {
     !matches!(value, Value::Null)
 }
