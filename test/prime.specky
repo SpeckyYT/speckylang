@@ -17,7 +17,7 @@
 ? <= / no, it's not prime /
 ! <= / yes, it's prime /
 
-{%\}
+{%$\}
 |< start {%}
 
 |< current - 1

@@ -21,7 +21,7 @@ pub fn run(parsed: &Statements) -> RunOutput {
 
     let mut line_index = 0;
 
-    let mut max_time: (Duration, Statement) = (Duration::ZERO, Statement::Truthy(0));
+    let mut max_time: (Duration, &Statement) = (Duration::ZERO, &Statement::Truthy(0));
 
     let stdout = io::stdout();
     let lock = stdout.lock();
@@ -401,7 +401,7 @@ pub fn run(parsed: &Statements) -> RunOutput {
         }
 
         if start_operation.elapsed() > max_time.0 {
-            max_time = (start_operation.elapsed(), parsed[line_index].clone())
+            max_time = (start_operation.elapsed(), &parsed[line_index])
         }
 
         line_index += 1;
@@ -454,7 +454,7 @@ fn string_to_value(string: &str) -> Value {
             .unwrap_or(Value::Integer(string.parse::<Integer>().unwrap()))
     }
 
-    if string.chars().filter(|c| c == &'.').count() == 2 {
+    if string.split('.').count() == 2 {
         return Value::Float(string.parse::<Float>().unwrap())
     }
 
@@ -505,8 +505,6 @@ fn value_reader<'a>(memory: &'a SpeckyDataContainer<Value>, value: &'a Value, re
         let exists = chain.iter().enumerate().find_map(|(i, v)| if v == &current_value { Some(i) } else { None });
 
         if let Some(index) = exists {
-            // println!("{chain:?} ({current_value:?}) [{reader} | {i}]");
-
             let base = reader + i + index + 1;
             let modulo = chain.len() - index;
             let chain_index = base % modulo + index;

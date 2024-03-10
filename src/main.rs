@@ -34,7 +34,7 @@ fn main() {
             let start = Instant::now();
 
             for _ in 0..100000 {
-                if start.elapsed() > Duration::from_secs_f64(10.0) {
+                if start.elapsed() > Duration::from_secs_f64(20.0) {
                     break
                 }
 
