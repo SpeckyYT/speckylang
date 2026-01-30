@@ -1,0 +1,63 @@
+# Draws langton's ant in SpeckyLang
+
+|< x <= 0
+|< y <= 0
+|< dir <= 0
+
+# boundaries for drawing
+|< left <= 0
+|< right <= 0
+|< up <= 0
+|< down <= 0
+
+|< iterations <= 0
+
+[<] loop
+    |< iterations + 1
+
+    # generate coordinates
+    |< coordinate <= // + §x + /,/ + §y
+    |< §coordinate ° <= false
+
+    # rotate
+    |< §coordinate ???????? |< dir + 1 |< temp <= §dir > 3 ? |< dir - 4
+    |< §coordinate !!!!!!!! |< dir - 1 |< temp <= §dir < 0 ? |< dir + 4
+
+    # invert color
+    |< §coordinate <= §§coordinate >< true
+
+    # move forward
+    |< temp <= §dir = 0 ?? |< x - 1
+    |< temp <= §dir = 1 ?? |< y + 1
+    |< temp <= §dir = 2 ?? |< x + 1
+    |< temp <= §dir = 3 ?? |< y - 1
+
+    # adjust drawing boundaries
+    |< temp <= §left > §x ?? |< left <= §x
+    |< temp <= §right < §x ?? |< right <= §x
+    |< temp <= §up > §y ?? |< up <= §y
+    |< temp <= §down < §y ?? |< down <= §y
+
+    # |< temp <= §iterations % 1000 ? [>] skip_drawing
+
+    # draw debug info
+    |< iterations {@°\} {%}
+    |< time {@°\} {%°\} <= µ |< /(/ {@$\} |< time_end {%\} |< / without drawing)/ {@$}
+
+    # draw
+    |< u <= §up
+    [<] line
+        |< l <= §left
+        [<] column
+            |< draw_coordinate <= // + §l + /,/ + §u
+            |< §draw_coordinate ?? |< /█/ {@$\}
+            |< §draw_coordinate !! |< / / {@$\}
+
+            |< l + 1 |< temp <= §l =< §right ? [>] column
+        {}
+        |< u + 1 |< temp <= §u =< §down ? [>] line
+    {}
+    |< time_end <= µ
+
+    [<] skip_drawing
+[>] loop
