@@ -91,11 +91,11 @@ pub enum Token {
     Mu,
     #[regex(r"/(?:\.|[^/])*/")]
     StringLiteral,
-    #[regex(r"[0-9]+", priority = 2)]
+    #[regex(r"[0-9]+", priority = 3)]
     IntegerLiteral,
     #[regex(r"[0-9]+\.[0-9]+")]
     FloatLiteral,
 
-    #[regex(r"[ \r\t\n]*|(#[^\n]*\n)", logos::skip)]
+    #[regex(r"[ \r\t\n]+|(#[^\n]+\n)", logos::skip, allow_greedy = true)]
     Error,
 }
