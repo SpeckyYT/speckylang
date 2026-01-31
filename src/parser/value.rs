@@ -50,6 +50,7 @@ impl<'a> Parser<'a> {
             Some(Token::StringLiteral) => {
                 self.next()?;
                 let slice = self.slice();
+                let span = self.span();
 
                 let mut text = String::new();
                 let mut is_escape = false;
@@ -64,11 +65,12 @@ impl<'a> Parser<'a> {
                             't' => "\t",
                             '0' => "\0",
                             '\\'=> "\\",
-                            _ => return Err(ParsingError::CustomError {
-                                text: "invalid escape character".to_string(),
-                                area: CodeArea::from_span(i..i+1),
+                            c => return Err(ParsingError::CustomError {
+                                text: format!("Invalid escape character '{c}'"),
+                                area: CodeArea::from_span(span.start+i-1..span.start+i+1),
                             }),
-                        })
+                        });
+                        is_escape = false
                     } else if char == &'\\' {
                         is_escape = true
                     } else {
