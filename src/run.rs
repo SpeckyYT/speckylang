@@ -1,9 +1,9 @@
 use std::time::{Instant, Duration};
 use std::io::{self, Write};
 
-use fnv::FnvHashMap;
+use ahash::AHashMap;
 
-type SpeckyDataContainer<V> = FnvHashMap<Value, V>;
+type SpeckyDataContainer<V> = AHashMap<Value, V>;
 
 use crate::ast::{Statements, Statement, Value, LogKind, Integer, Float, SmallInt};
 
