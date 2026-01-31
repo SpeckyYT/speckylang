@@ -249,8 +249,8 @@ checksum = "f52b00d39961fc5b2736ea853c9cc86238e165017a493d1d5c8eac6bdc4cc273"
 
 [[package]]
 name = "num-bigfloat"
-version = "1.7.0"
-source = "git+https://github.com/SpeckyYT/num-bigfloat#d866f0a2b96b135a3bb82d852e76598387f86790"
+version = "1.7.2"
+source = "git+https://github.com/SpeckyYT/num-bigfloat#18f69de5ae9b951b96c6ef208b07ef1003f6a708"
 dependencies = [
  "num-traits",
  "rand",

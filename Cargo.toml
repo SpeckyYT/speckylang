@@ -12,5 +12,5 @@ fnv = "1.0.7"
 itertools = "0.14.0"
 logos = "0.16.1"
 lyneate = "0.2.1"
-num-bigfloat = { git = "https://github.com/SpeckyYT/num-bigfloat", version = "1.7.0" }
+num-bigfloat = { git = "https://github.com/SpeckyYT/num-bigfloat", version = "1.7.2" }
 num-bigint = "0.4.6"
