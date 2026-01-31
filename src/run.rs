@@ -448,14 +448,16 @@ fn string_to_value(string: &str) -> Value {
         return Value::Null
     }
 
-    if string.chars().all(|c| char::is_ascii_digit(&c)) {
-        return string.parse::<SmallInt>()
-            .map(Value::SmallInt)
-            .unwrap_or(Value::Integer(string.parse::<Integer>().unwrap()))
-    }
-
-    if string.split('.').count() == 2 {
-        return Value::Float(string.parse::<Float>().unwrap())
+    if string.chars().all(|c| char::is_ascii_digit(&c) || c == '.') {
+        match string.chars().filter(|&c| c == '.').count() {
+            0 => 
+                return string.parse::<SmallInt>()
+                .map(Value::SmallInt)
+                .unwrap_or(Value::Integer(string.parse::<Integer>().unwrap())),
+            1 => 
+                return Value::Float(string.parse::<Float>().unwrap()),
+            _ => {}
+        }
     }
 
     return match string {
