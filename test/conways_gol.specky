@@ -1,0 +1,116 @@
+# Conway's Game Of Life in SpeckyLang
+
+|< max_iterations <= 100
+
+# constants
+|< grid <= /grid:/
+|< neighbors_grid <= /neighbors_grid:/
+|< survival_low <= 2
+|< survival_high <= 3
+|< reproduction <= 3
+
+# boundaries for drawing
+|< left <= 0
+|< right <= 0
+|< top <= 0
+|< bottom <= 1
+
+|< R_pentomino <= /
+ #
+##
+ ##
+/
+|< acorn <= /
+ #
+   #
+##  ###
+/
+
+|< initial_state <= §R_pentomino
+
+# Loader
+|< i <= 0
+|< y <= -1
+[<] line
+    |< x <= 0
+    [<] column
+        # current character
+        |< cc <= §initial_state ~ §i
+        # skip if cc is \r
+        |< temp <= §cc = /\r/ ??? |< i + 1 [>] column
+        |< temp <= §cc = /#/ ????? ??
+            |< coordinate <= §grid + §x + /,/ + §y
+            |< §coordinate <= true
+        |< temp <= §right < §x ??
+            |< right <= §x
+        |< x + 1
+        |< i + 1
+        |< temp <= §cc $$$ >< /\n/ ?
+    [>] column
+    |< temp <= §right < §x ??
+        |< right <= §x
+    |< y + 1
+    |< temp <= §cc $ 
+[>] line
+|< right - 2
+|< bottom <= §y - 2
+
+
+|< iteration <= 0
+[<] cgol
+    # reset neighbors
+    |< y <= §top - 1 [<] reset_neighbors_y
+        |< x <= §left - 1 [<] reset_neighbors_x
+            |< coordinate <= §neighbors_grid + §x + /,/ + §y
+            |< §coordinate <= 0
+            |< x + 1 |< temp <= §x - 1 =< §right ? [>] reset_neighbors_x
+        |< y + 1 |< temp <= §y - 1 =< §bottom ? [>] reset_neighbors_y
+
+    # check neighbors (and draw)
+    # {}
+    |< iteration {@°\} {%}
+
+    |< y <= §top
+    [<] check_y
+        |< x <= §left
+        [<] check_x
+            |< coordinate <= §grid + §x + /,/ + §y
+            |< cc <= §§coordinate ?? |< /█/ {@$\}
+            |< cc <= §§coordinate !! |< / / {@$\}
+            |< cc <= §§coordinate
+            ???? ???? ????? ???? ???????? ????????
+                |< ny <= §y - 1 [<] neighbors_y
+                    |< nx <= §x - 1 [<] neighbors_x
+                        |< coordinate <= §neighbors_grid + §nx + /,/ + §ny
+                        |< §coordinate ° <= 0 + 1
+                        |< nx + 1 |< temp <= §nx - 1 =< §x ? [>] neighbors_x
+                    |< ny + 1 |< temp <= §ny - 1 =< §y ? [>] neighbors_y
+
+            |< x + 1 |< temp <= §x =< §right ? [>] check_x
+        {}
+        |< y + 1 |< temp <= §y =< §bottom ? [>] check_y
+
+    # update grid
+    |< y <= §top - 1
+    [<] update_y
+        |< x <= §left - 1
+        [<] update_x
+            |< neighbors_coordinate <= §neighbors_grid + §x + /,/ + §y
+            |< grid_coordinate <= §grid + §x + /,/ + §y
+            |< is_alive <= §§grid_coordinate ?? ??? ??? ???
+                |< §neighbors_coordinate - 1 # filter out self
+                |< not_overpopulation <= §§neighbors_coordinate =< §survival_high
+                |< not_underpopulation <= §§neighbors_coordinate >= §survival_low
+                |< §grid_coordinate & §not_overpopulation & §not_underpopulation
+            |< is_alive !!!!!!  !!!!!! !!!!!! !!!!!! !!!!!!
+                |< temp <= §§neighbors_coordinate = §reproduction ?? ?????? ?????? ?????? ??????
+                    |< §grid_coordinate <= true
+                    |< temp <= §x < §left ?? |< left <= §x
+                    |< temp <= §y < §top ?? |< top <= §y
+                    |< temp <= §x > §right ?? |< right <= §x
+                    |< temp <= §y > §bottom ?? |< bottom <= §y
+            |< x + 1 |< temp <= §x - 1 =< §right ? [>] update_x
+        |< y + 1 |< temp <= §y - 1 =< §bottom ? [>] update_y
+    |< iteration + 1
+    |< temp <= §iteration - 1 < §max_iterations ?
+[>] cgol
