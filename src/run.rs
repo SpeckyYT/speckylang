@@ -27,6 +27,8 @@ pub fn run(parsed: &Statements) -> RunOutput {
     let lock = stdout.lock();
     let mut w = io::BufWriter::new(lock);
     let mut output = String::new();
+    let mut output_updated = false;
+    let mut last_flush = Instant::now();
 
     loop {
         if line_index >= parsed.len() { break; }
@@ -380,19 +382,13 @@ pub fn run(parsed: &Statements) -> RunOutput {
                 if *assign {
                     let _ = variables.insert(
                         current_pointer.clone(),
-                        match string.as_str() {
-                            "false" => Value::Boolean(false),
-                            "true" => Value::Boolean(true),
-                            "null" => Value::Null,
-                            string if string.chars().all(|c| char::is_ascii_digit(&c)) =>
-                                Value::Integer(string.parse().unwrap()),
-                            string => Value::Text(string.to_string()),
-                        }
+                        string_to_value(&string),
                     );
                 }
 
                 write!(w, "{string}").unwrap();
                 output.push_str(&string);
+                output_updated = true;
             },
             Input() => {
                 w.flush().unwrap();
@@ -402,6 +398,12 @@ pub fn run(parsed: &Statements) -> RunOutput {
 
         if start_operation.elapsed() > max_time.0 {
             max_time = (start_operation.elapsed(), &parsed[line_index])
+        }
+
+        if output_updated && last_flush.elapsed() > Duration::from_millis(50) {
+            w.flush().unwrap();
+            last_flush = Instant::now();
+            output_updated = false;
         }
 
         line_index += 1;
@@ -472,7 +474,8 @@ fn string_to_value(string: &str) -> Value {
 }
 
 fn value_reader<'a>(memory: &'a SpeckyDataContainer<Value>, value: &'a Value, reader: usize) -> &'a Value {
-    let mut chain: Vec<&Value> = vec![value];
+    let mut chain: Vec<&Value> = Vec::with_capacity(memory.len());
+    chain.push(value);
 
     let mut current_value = value;
 
