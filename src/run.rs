@@ -2,6 +2,8 @@ use std::time::{Instant, Duration};
 use std::io::{self, Write};
 
 use ahash::AHashMap;
+use num_bigfloat::RoundingMode;
+use num_bigint::Sign;
 
 type SpeckyDataContainer<V> = AHashMap<Value, V>;
 
@@ -206,6 +208,35 @@ pub fn run(parsed: &Statements) -> RunOutput {
                         (Value::SmallInt(left), Value::Integer(right)) => compress_integer(Integer::from(left) * right),
                         (Value::Integer(left), Value::SmallInt(right)) => compress_integer(left * Integer::from(right)),
                         (Value::Float(left), Value::Float(right)) => Value::Float(left * right),
+                        (Value::Text(mut left), Value::Integer(mut right)) => {
+                            if matches!(right.sign(), Sign::Minus) {
+                                left = left.chars().rev().collect();
+                                right = -right;
+                            }
+                            Value::Text(left.repeat(right.try_into().unwrap_or(usize::MAX)))
+                        },
+                        (Value::Text(mut left), Value::SmallInt(mut right)) => {
+                            if right < 0 {
+                                left = left.chars().rev().collect();
+                                right = right.abs();
+                            }
+                            Value::Text(left.repeat(right.try_into().unwrap_or(usize::MAX)))
+                        },
+                        (Value::Text(left), Value::Float(right)) => {
+                            let integer = right.int().abs().to_u128().map(|i| i.try_into().unwrap_or(usize::MAX)).unwrap_or(usize::MAX);
+                            let fraction = (right.frac().to_f64().abs() * left.len() as f64).round() as usize;
+                            let fraction_string = &left[0..fraction];
+                            if right.is_negative() {
+                                let mut output: String = fraction_string.chars().rev().collect();
+                                let rev_string = left.chars().rev().collect::<String>().repeat(integer);
+                                output.push_str(&rev_string);
+                                Value::Text(output)
+                            } else {
+                                let mut output = left.repeat(integer);
+                                output.push_str(fraction_string);
+                                Value::Text(output)
+                            }
+                        },
                         _ => Value::Null,
                     }
                 });
