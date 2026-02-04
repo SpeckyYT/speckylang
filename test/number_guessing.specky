@@ -1,0 +1,28 @@
+|< start <= µ
+
+[<] back
+
+|< guess <= /guess the number (1-100): / {%$\} '
+
+# rng based on when the program started
+|< magic °° °° °  °°° °° °  °°°°° °° °°°°°° °°  ° °°°  ° °°°
+    |< iter <= 500
+    |< magic <= 0
+    [<] rng_main
+        |< current_time <= §start {%<}
+        |< i <= 0
+        [<] rng_loop
+            |< cc <= §current_time ~ §i ? {%$<}
+            |< i + 1
+            |< temp <= 0 + §cc $$ |< magic + §cc
+            |< cc ?
+        [>] rng_loop
+        |< iter - 1 ? 
+    [>] rng_main
+    |< magic % 100 + 1
+
+|< /the number is bigger/ <= §magic > §guess ? {@$}
+|< /the number is smaller/ <= §magic < §guess ? {@$}
+|< /correct/ <= §magic = §guess ? {@$} !
+
+[>] back
