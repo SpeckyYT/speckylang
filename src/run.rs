@@ -384,11 +384,11 @@ pub fn run(parsed: &Statements) -> RunOutput {
                         current_pointer.clone(),
                         string_to_value(&string),
                     );
+                } else {
+                    write!(w, "{string}").unwrap();
+                    output.push_str(&string);
+                    output_updated = true;
                 }
-
-                write!(w, "{string}").unwrap();
-                output.push_str(&string);
-                output_updated = true;
             },
             Input() => {
                 w.flush().unwrap();
@@ -457,7 +457,9 @@ fn string_to_value(string: &str) -> Value {
                 .map(Value::SmallInt)
                 .unwrap_or(Value::Integer(string.parse::<Integer>().unwrap())),
             1 => 
-                return Value::Float(string.parse::<Float>().unwrap()),
+                if let Ok(float) = string.parse::<Float>() {
+                    return Value::Float(float)
+                },
             _ => {}
         }
     }

@@ -174,7 +174,7 @@ Logging statements are delimited by `{` and `}`, and may contain some of the fol
 §   # reads the value (fun fact: doing `{@§}` is the same as `{%}`)
 
 # assigning
-<   # assigns the output print to the value at current pointer (it can be any of type depending on the output)
+<   # assigns the output print to the value at current pointer (it can be any of type depending on the output), it won't print to the terminal
 
 # special printing
 $   # prints the value in a special/alterate way
