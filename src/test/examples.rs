@@ -5,7 +5,7 @@ const MAX_BOTTLES: usize = 99;
 
 #[test]
 fn bottles_of_beer() {
-    let output = test_run!(test_read!("test/99-bottles-of-beer.specky"));
+    let output = test_run!(test_read!("examples/99-bottles-of-beer.specky"));
 
     const fn plural(i: usize) -> &'static str { if i == 1 { "" } else { "s" } }
 
@@ -38,7 +38,7 @@ fn bottles_of_beer() {
 
 #[test]
 fn factorial() {
-    let output = test_run!(test_read!("test/factorial.specky"));
+    let output = test_run!(test_read!("examples/factorial.specky"));
 
     const VALUE: i32 = 10;
 
@@ -47,7 +47,7 @@ fn factorial() {
 
 #[test]
 fn multi_machine() {
-    let output = test_run!(test_read!("test/multi-machine.specky"));
+    let output = test_run!(test_read!("examples/multi-machine.specky"));
 
     const A: i32 = 50;
     const B: i32 = 10;
@@ -58,7 +58,7 @@ fn multi_machine() {
 #[test]
 fn fizzbuzz() {
     assert_eq!(
-        test_run!(test_read!("test/fizzbuzz.specky")).stdout,
+        test_run!(test_read!("examples/fizzbuzz.specky")).stdout,
         (1..=1000)
         .map(|i|{
             let mut string = String::with_capacity(8);
@@ -73,7 +73,7 @@ fn fizzbuzz() {
 
 #[test]
 fn brainfuck() {
-    let string = test_read!("test/brainfuck.specky");
+    let string = test_read!("examples/brainfuck.specky");
 
     let run = |instructions: &str, debug: bool| {
         test_run!(

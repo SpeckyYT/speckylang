@@ -202,7 +202,7 @@ $   # prints the value in a special/alterate way
 |< total {%}    # print the `total` variable
 ```
 
-### For other examples, check the `test/` folder
+### For other examples, check the `examples/` folder
 
 ## Where can I join the SpeckyLang religion?
 
