@@ -1,0 +1,29 @@
+|< esc <= 27 {%$<}
+|< clear <= §esc + /[0m/
+
+|< message <= /ILOVEHOTMOMMIES!/
+|< message_length <= 16
+|< iter_skip <= 4
+
+|< i <= 0
+
+|< b <= 0
+[<] b_loop
+    |< g <= 0
+    [<] g_loop
+        |< r <= 0
+        [<] r_loop
+            |< print <= §esc + /[38;2;/ + §r + /;/ + §g + /;/ + §b + /m/ {%$\}
+            |< letter <= §message ~ §i {%$\}
+            |< i + 1 % §message_length
+            |< r + §iter_skip
+            |< temp <= §r =< 255 ?
+        [>] r_loop
+        |< g + §iter_skip
+        |< temp <= §g =< 255 ?
+    [>] g_loop
+    |< b + §iter_skip
+    |< temp <= §b =< 255 ?
+[>] b_loop
+
+|< clear {%$\}
