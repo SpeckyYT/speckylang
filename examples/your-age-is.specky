@@ -1,2 +1,5 @@
-|< /what's your age? / {@$\}
-|< /your age is / ' {@$\} {%$}
+[<] until_valid
+    |< /input your age: / {@$\}
+    |< age ' - 0 ° # simple check to see if the input is a number
+[>] until_valid
+|< /your age is / {@$\} |< age {%}
