@@ -13,7 +13,7 @@
 [<] brainfuck
 
 |< current_instruction <= §input ~ §instruction
-|< §address ! <= 0
+|< §address ° <= 0
 
 |< debug ? ??? ???? ??? ??? ? ??
     {}
@@ -41,7 +41,7 @@
     |< address - 1
 
 |< temp <= §current_instruction = /[/ ??? ?? ??
-    |< temp <= /depth/ + depth
+    |< temp <= /depth/ + §depth
     |< §temp <= §instruction
     |< depth + 1
 
@@ -49,7 +49,7 @@
     |< temp <= §depth > 0 ???? ??? ??? ??  ???? ??
         |< temp <= §§address = 0 !! !!! !!
             |< temp_depth <= §depth - 1
-            |< temp <= /depth/ + temp_depth
+            |< temp <= /depth/ + §temp_depth
             |< instruction <= §§temp
         |< temp <= §§address = 0 ??
             |< depth - 1
