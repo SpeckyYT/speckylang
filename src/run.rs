@@ -2,7 +2,6 @@ use std::time::{Instant, Duration};
 use std::io::{self, Write};
 
 use ahash::AHashMap;
-use num_bigfloat::RoundingMode;
 use num_bigint::Sign;
 
 type SpeckyDataContainer<V> = AHashMap<Value, V>;
@@ -123,7 +122,7 @@ pub fn run(parsed: &Statements) -> RunOutput {
             Index(expr) => {
                 left_right_operator!(|left, right| {
                     match (left, right) {
-                        (Value::Text(string), right) => {
+                        (Value::Text(string)|Value::Symbol(string), right) => {
                             let integer: Option<usize> = match right {
                                 Value::Integer(int) => int.try_into().ok(),
                                 Value::SmallInt(int) => int.try_into().ok(),
@@ -178,6 +177,8 @@ pub fn run(parsed: &Statements) -> RunOutput {
                         (Value::Text(left), Value::Text(right)) => Value::Text(left + &right),
                         (Value::Text(left), Value::Integer(right)) => Value::Text(left + &right.to_string()),
                         (Value::Text(left), Value::SmallInt(right)) => Value::Text(left + &right.to_string()),
+                        (Value::SmallInt(left), Value::Float(right)) => Value::Float(Float::from_i128(left) + right),
+                        (Value::Integer(left), Value::Float(right)) => Value::Float(Float::parse(&left.to_string()).unwrap() + right),
                         (Value::Float(left), Value::Float(right)) => Value::Float(left + right),
                         _ => Value::Null,
                     }
@@ -193,6 +194,8 @@ pub fn run(parsed: &Statements) -> RunOutput {
                             .unwrap_or(Value::Integer(Integer::from(left) - Integer::from(right))),
                         (Value::Integer(left), Value::SmallInt(right)) => compress_integer(left - Integer::from(right)),
                         (Value::SmallInt(left), Value::Integer(right)) => compress_integer(Integer::from(left) - right),
+                        (Value::SmallInt(left), Value::Float(right)) => Value::Float(Float::from_i128(left) - right),
+                        (Value::Integer(left), Value::Float(right)) => Value::Float(Float::parse(&left.to_string()).unwrap() - right),
                         (Value::Float(left), Value::Float(right)) => Value::Float(left - right),
                         _ => Value::Null,
                     }
@@ -207,22 +210,24 @@ pub fn run(parsed: &Statements) -> RunOutput {
                             .unwrap_or(Value::Integer(Integer::from(left) * Integer::from(right))),
                         (Value::SmallInt(left), Value::Integer(right)) => compress_integer(Integer::from(left) * right),
                         (Value::Integer(left), Value::SmallInt(right)) => compress_integer(left * Integer::from(right)),
+                        (Value::SmallInt(left), Value::Float(right)) => Value::Float(Float::from_i128(left) * right),
+                        (Value::Integer(left), Value::Float(right)) => Value::Float(Float::parse(&left.to_string()).unwrap() * right),
                         (Value::Float(left), Value::Float(right)) => Value::Float(left * right),
-                        (Value::Text(mut left), Value::Integer(mut right)) => {
+                        (Value::Text(mut left)|Value::Symbol(mut left), Value::Integer(mut right)) => {
                             if matches!(right.sign(), Sign::Minus) {
                                 left = left.chars().rev().collect();
                                 right = -right;
                             }
                             Value::Text(left.repeat(right.try_into().unwrap_or(usize::MAX)))
                         },
-                        (Value::Text(mut left), Value::SmallInt(mut right)) => {
+                        (Value::Text(mut left)|Value::Symbol(mut left), Value::SmallInt(mut right)) => {
                             if right < 0 {
                                 left = left.chars().rev().collect();
                                 right = right.abs();
                             }
                             Value::Text(left.repeat(right.try_into().unwrap_or(usize::MAX)))
                         },
-                        (Value::Text(left), Value::Float(right)) => {
+                        (Value::Text(left)|Value::Symbol(left), Value::Float(right)) => {
                             let integer = right.int().abs().to_u128().map(|i| i.try_into().unwrap_or(usize::MAX)).unwrap_or(usize::MAX);
                             let fraction = (right.frac().to_f64().abs() * left.len() as f64).round() as usize;
                             let fraction_string = &left[0..fraction];
@@ -248,6 +253,8 @@ pub fn run(parsed: &Statements) -> RunOutput {
                         (Value::SmallInt(left), Value::SmallInt(right)) => Value::SmallInt(left / right),
                         (Value::Integer(left), Value::SmallInt(right)) => compress_integer(left / &Integer::from(right)),
                         (Value::SmallInt(left), Value::Integer(right)) => compress_integer(Integer::from(left) / &right),
+                        (Value::SmallInt(left), Value::Float(right)) => Value::Float(Float::from_i128(left) / right),
+                        (Value::Integer(left), Value::Float(right)) => Value::Float(Float::parse(&left.to_string()).unwrap() / right),
                         (Value::Float(left), Value::Float(right)) => Value::Float(left / right),
                         _ => Value::Null,
                     }
@@ -260,6 +267,8 @@ pub fn run(parsed: &Statements) -> RunOutput {
                         (Value::SmallInt(left), Value::SmallInt(right)) => Value::SmallInt(left % right),
                         (Value::Integer(left), Value::SmallInt(right)) => compress_integer(left % &Integer::from(right)),
                         (Value::SmallInt(left), Value::Integer(right)) => compress_integer(Integer::from(left) % &right),
+                        (Value::SmallInt(left), Value::Float(right)) => Value::Float(Float::from_i128(left) % right),
+                        (Value::Integer(left), Value::Float(right)) => Value::Float(Float::parse(&left.to_string()).unwrap() % right),
                         (Value::Float(left), Value::Float(right)) => Value::Float(left % right),
                         _ => Value::Null,
                     }
@@ -272,6 +281,8 @@ pub fn run(parsed: &Statements) -> RunOutput {
                         (Value::SmallInt(left), Value::SmallInt(right)) => Value::SmallInt(left.pow(right.try_into().unwrap())),
                         (Value::Integer(left), Value::SmallInt(right)) => compress_integer(left.pow(right.try_into().unwrap())),
                         (Value::SmallInt(left), Value::Integer(right)) => compress_integer(Integer::from(left).pow(right.try_into().unwrap())),
+                        (Value::SmallInt(left), Value::Float(right)) => Value::Float(Float::from_i128(left).pow(&right)),
+                        (Value::Integer(left), Value::Float(right)) => Value::Float(Float::parse(&left.to_string()).unwrap().pow(&right)),
                         (Value::Float(left), Value::Float(right)) => Value::Float(left.pow(&right)),
                         _ => Value::Null,
                     }
