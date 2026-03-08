@@ -1,20 +1,19 @@
 |< total    <= 1.0
 
-|< top      <= 2.0
-|< bottom   <= 1.0
+|< top      <= 2
+|< bottom   <= 1
+
+|< i <= 0
 
 [<] loop
-    |< total
-    * §top
-    \ §bottom
+    |< t <= §top * 1.0
+    |< b <= §bottom * 1.0
+    |< total * §t \ §b
 
-    |< bottom + 2.0
+    |< temp <= §i % 2 ? |< top ! |< bottom 
+        + 2
 
-    |< total
-    * §top
-    \ §bottom
+    |< i + 1
 
-    |< temp <= §total * 2.0 {%}
-
-    |< top + 2.0
+    |< temp <= §total * 2.0 {%} ?
 [>] loop
