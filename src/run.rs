@@ -2,6 +2,7 @@ use std::time::{Instant, Duration};
 use std::io::{self, Write};
 
 use ahash::AHashMap;
+use num_bigfloat::BigFloat;
 use num_bigint::Sign;
 
 type SpeckyDataContainer<V> = AHashMap<Value, V>;
@@ -65,6 +66,20 @@ pub fn run(parsed: &Statements) -> RunOutput {
                                 ($callback:expr) => {
                                     let right = operand!().clone();
                                     let left = variables.get(&current_pointer).unwrap_or(&Value::Null).clone();
+                                    // Number conversion
+                                    let (left, right) = match (&left, &right) {
+                                        // SmallInt -> Integer
+                                        (Value::Integer(_),Value::SmallInt(si)) => (left, Value::Integer(Integer::from(*si))),
+                                        (Value::SmallInt(si),Value::Integer(_)) => (Value::Integer(Integer::from(*si)), right),
+                                        // SmallInt -> Float
+                                        (Value::Float(_),Value::SmallInt(si)) => (left, Value::Float(BigFloat::from(*si))),
+                                        (Value::SmallInt(si),Value::Float(_)) => (Value::Float(BigFloat::from(*si)), right),
+                                        // Integer -> Float
+                                        (Value::Float(_),Value::Integer(bi)) => (left, Value::Float(BigFloat::parse(&bi.to_string()).unwrap())),
+                                        (Value::Integer(bi),Value::Float(_)) => (Value::Float(BigFloat::parse(&bi.to_string()).unwrap()), right),
+                                        // Other
+                                        _ => (left, right),
+                                    };
                                     #[allow(clippy::redundant_closure_call)]
                                     let result = $callback(left, right);
                                     variables.insert(current_pointer.clone(), result);
@@ -171,15 +186,13 @@ pub fn run(parsed: &Statements) -> RunOutput {
                 left_right_operator!(|left, right|{
                     match (left, right) {
                         (Value::Integer(left), Value::Integer(right)) => compress_integer(left + &right),
-                        (Value::SmallInt(left), Value::SmallInt(right)) => Value::SmallInt(left + right),
-                        (Value::Integer(left), Value::SmallInt(right)) => compress_integer(left + Integer::from(right)),
-                        (Value::SmallInt(left), Value::Integer(right)) => compress_integer(Integer::from(left) + &right),
+                        (Value::SmallInt(left), Value::SmallInt(right)) => left.checked_add(right)
+                            .map(Value::SmallInt)
+                            .unwrap_or(Value::Integer(Integer::from(left) + Integer::from(right))),
+                        (Value::Float(left), Value::Float(right)) => Value::Float(left + right),
                         (Value::Text(left), Value::Text(right)) => Value::Text(left + &right),
                         (Value::Text(left), Value::Integer(right)) => Value::Text(left + &right.to_string()),
                         (Value::Text(left), Value::SmallInt(right)) => Value::Text(left + &right.to_string()),
-                        (Value::SmallInt(left), Value::Float(right)) => Value::Float(Float::from_i128(left) + right),
-                        (Value::Integer(left), Value::Float(right)) => Value::Float(Float::parse(&left.to_string()).unwrap() + right),
-                        (Value::Float(left), Value::Float(right)) => Value::Float(left + right),
                         _ => Value::Null,
                     }
                 });
@@ -188,14 +201,9 @@ pub fn run(parsed: &Statements) -> RunOutput {
                 left_right_operator!(|left, right|{
                     match (left, right) {
                         (Value::Integer(left), Value::Integer(right)) => compress_integer(left - &right),
-                        (Value::SmallInt(left), Value::SmallInt(right)) =>
-                            left.checked_sub(right)
+                        (Value::SmallInt(left), Value::SmallInt(right)) => left.checked_sub(right)
                             .map(Value::SmallInt)
                             .unwrap_or(Value::Integer(Integer::from(left) - Integer::from(right))),
-                        (Value::Integer(left), Value::SmallInt(right)) => compress_integer(left - Integer::from(right)),
-                        (Value::SmallInt(left), Value::Integer(right)) => compress_integer(Integer::from(left) - right),
-                        (Value::SmallInt(left), Value::Float(right)) => Value::Float(Float::from_i128(left) - right),
-                        (Value::Integer(left), Value::Float(right)) => Value::Float(Float::parse(&left.to_string()).unwrap() - right),
                         (Value::Float(left), Value::Float(right)) => Value::Float(left - right),
                         _ => Value::Null,
                     }
@@ -208,10 +216,6 @@ pub fn run(parsed: &Statements) -> RunOutput {
                         (Value::SmallInt(left), Value::SmallInt(right)) => left.checked_mul(right)
                             .map(Value::SmallInt)
                             .unwrap_or(Value::Integer(Integer::from(left) * Integer::from(right))),
-                        (Value::SmallInt(left), Value::Integer(right)) => compress_integer(Integer::from(left) * right),
-                        (Value::Integer(left), Value::SmallInt(right)) => compress_integer(left * Integer::from(right)),
-                        (Value::SmallInt(left), Value::Float(right)) => Value::Float(Float::from_i128(left) * right),
-                        (Value::Integer(left), Value::Float(right)) => Value::Float(Float::parse(&left.to_string()).unwrap() * right),
                         (Value::Float(left), Value::Float(right)) => Value::Float(left * right),
                         (Value::Text(mut left)|Value::Symbol(mut left), Value::Integer(mut right)) => {
                             if matches!(right.sign(), Sign::Minus) {
@@ -251,10 +255,6 @@ pub fn run(parsed: &Statements) -> RunOutput {
                     match (left, right) {
                         (Value::Integer(left), Value::Integer(right)) => compress_integer(left / &right),
                         (Value::SmallInt(left), Value::SmallInt(right)) => Value::SmallInt(left / right),
-                        (Value::Integer(left), Value::SmallInt(right)) => compress_integer(left / &Integer::from(right)),
-                        (Value::SmallInt(left), Value::Integer(right)) => compress_integer(Integer::from(left) / &right),
-                        (Value::SmallInt(left), Value::Float(right)) => Value::Float(Float::from_i128(left) / right),
-                        (Value::Integer(left), Value::Float(right)) => Value::Float(Float::parse(&left.to_string()).unwrap() / right),
                         (Value::Float(left), Value::Float(right)) => Value::Float(left / right),
                         _ => Value::Null,
                     }
@@ -265,10 +265,6 @@ pub fn run(parsed: &Statements) -> RunOutput {
                     match (left, right) {
                         (Value::Integer(left), Value::Integer(right)) => compress_integer(left % &right),
                         (Value::SmallInt(left), Value::SmallInt(right)) => Value::SmallInt(left % right),
-                        (Value::Integer(left), Value::SmallInt(right)) => compress_integer(left % &Integer::from(right)),
-                        (Value::SmallInt(left), Value::Integer(right)) => compress_integer(Integer::from(left) % &right),
-                        (Value::SmallInt(left), Value::Float(right)) => Value::Float(Float::from_i128(left) % right),
-                        (Value::Integer(left), Value::Float(right)) => Value::Float(Float::parse(&left.to_string()).unwrap() % right),
                         (Value::Float(left), Value::Float(right)) => Value::Float(left % right),
                         _ => Value::Null,
                     }
@@ -279,10 +275,6 @@ pub fn run(parsed: &Statements) -> RunOutput {
                     match (left, right) {
                         (Value::Integer(left), Value::Integer(right)) => compress_integer(left.pow(right.try_into().unwrap())),
                         (Value::SmallInt(left), Value::SmallInt(right)) => Value::SmallInt(left.pow(right.try_into().unwrap())),
-                        (Value::Integer(left), Value::SmallInt(right)) => compress_integer(left.pow(right.try_into().unwrap())),
-                        (Value::SmallInt(left), Value::Integer(right)) => compress_integer(Integer::from(left).pow(right.try_into().unwrap())),
-                        (Value::SmallInt(left), Value::Float(right)) => Value::Float(Float::from_i128(left).pow(&right)),
-                        (Value::Integer(left), Value::Float(right)) => Value::Float(Float::parse(&left.to_string()).unwrap().pow(&right)),
                         (Value::Float(left), Value::Float(right)) => Value::Float(left.pow(&right)),
                         _ => Value::Null,
                     }
@@ -299,10 +291,8 @@ pub fn run(parsed: &Statements) -> RunOutput {
                     match (left, right) {
                         (Value::Integer(left), Value::Integer(right)) => Value::Boolean(left < right),
                         (Value::SmallInt(left), Value::SmallInt(right)) => Value::Boolean(left < right),
-                        (Value::SmallInt(left), Value::Integer(right)) => Value::Boolean(Integer::from(left) < right),
-                        (Value::Integer(left), Value::SmallInt(right)) => Value::Boolean(left < Integer::from(right)),
-                        (Value::Text(left), Value::Text(right)) => Value::Boolean(left < right),
                         (Value::Float(left), Value::Float(right)) => Value::Boolean(left < right),
+                        (Value::Text(left), Value::Text(right)) => Value::Boolean(left < right),
                         _ => Value::Null,
                     }
                 });
@@ -312,10 +302,8 @@ pub fn run(parsed: &Statements) -> RunOutput {
                     match (left, right) {
                         (Value::Integer(left), Value::Integer(right)) => Value::Boolean(left > right),
                         (Value::SmallInt(left), Value::SmallInt(right)) => Value::Boolean(left > right),
-                        (Value::SmallInt(left), Value::Integer(right)) => Value::Boolean(Integer::from(left) > right),
-                        (Value::Integer(left), Value::SmallInt(right)) => Value::Boolean(left > Integer::from(right)),
-                        (Value::Text(left), Value::Text(right)) => Value::Boolean(left > right),
                         (Value::Float(left), Value::Float(right)) => Value::Boolean(left > right),
+                        (Value::Text(left), Value::Text(right)) => Value::Boolean(left > right),
                         _ => Value::Null,
                     }
                 });
@@ -325,10 +313,8 @@ pub fn run(parsed: &Statements) -> RunOutput {
                     match (left, right) {
                         (Value::Integer(left), Value::Integer(right)) => Value::Boolean(left <= right),
                         (Value::SmallInt(left), Value::SmallInt(right)) => Value::Boolean(left <= right),
-                        (Value::SmallInt(left), Value::Integer(right)) => Value::Boolean(Integer::from(left) <= right),
-                        (Value::Integer(left), Value::SmallInt(right)) => Value::Boolean(left <= Integer::from(right)),
-                        (Value::Text(left), Value::Text(right)) => Value::Boolean(left <= right),
                         (Value::Float(left), Value::Float(right)) => Value::Boolean(left <= right),
+                        (Value::Text(left), Value::Text(right)) => Value::Boolean(left <= right),
                         _ => Value::Null,
                     }
                 });
@@ -338,10 +324,8 @@ pub fn run(parsed: &Statements) -> RunOutput {
                     match (left, right) {
                         (Value::Integer(left), Value::Integer(right)) => Value::Boolean(left >= right),
                         (Value::SmallInt(left), Value::SmallInt(right)) => Value::Boolean(left >= right),
-                        (Value::SmallInt(left), Value::Integer(right)) => Value::Boolean(Integer::from(left) >= right),
-                        (Value::Integer(left), Value::SmallInt(right)) => Value::Boolean(left >= Integer::from(right)),
-                        (Value::Text(left), Value::Text(right)) => Value::Boolean(left >= right),
                         (Value::Float(left), Value::Float(right)) => Value::Boolean(left >= right),
+                        (Value::Text(left), Value::Text(right)) => Value::Boolean(left >= right),
                         _ => Value::Null,
                     }
                 });
@@ -358,6 +342,7 @@ pub fn run(parsed: &Statements) -> RunOutput {
                         value_to_string(print, *special)
                     },
                     Some(LogKind::Type) => {
+                        // TODO: idk, reader and selecting what the value actually is, maybe make it a property
                         match variables.get(&current_pointer).unwrap_or(&NULL) {
                             Value::JumpAddress(_) => "JumpAddress",
                             Value::Symbol(_) => "Symbol",
