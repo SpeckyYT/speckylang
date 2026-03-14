@@ -70,3 +70,15 @@ fn circular_reader() {
         assert_eq!(ran.stdout, expected_output);
     }
 }
+
+#[test]
+fn jump_address_addition() {
+    let ran = test_run!("[<] a |< a {%} + 2 [>] a");
+    assert_eq!(ran.stdout, "1\n");
+}
+
+#[test]
+fn jump_address_set() {
+    let ran = test_run!("|< a <= 0 !! <= 5 [>] a {%}");
+    assert_eq!(ran.stdout, "5\n");
+}

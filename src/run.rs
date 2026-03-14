@@ -3,7 +3,7 @@ use std::io::{self, Write};
 
 use ahash::AHashMap;
 use num_bigfloat::BigFloat;
-use num_bigint::Sign;
+use num_bigint::{BigInt, Sign};
 
 type SpeckyDataContainer<V> = AHashMap<Value, V>;
 
@@ -21,7 +21,7 @@ pub fn run(parsed: &Statements) -> RunOutput {
     let mut variables: SpeckyDataContainer<Value> = SpeckyDataContainer::default();
     let mut current_pointer = Value::Null;
 
-    let mut line_index = 0;
+    let mut statement_index = 0;
 
     let mut max_time: (Duration, &Statement) = (Duration::ZERO, &Statement::Truthy(0));
 
@@ -33,11 +33,13 @@ pub fn run(parsed: &Statements) -> RunOutput {
     let mut last_flush = Instant::now();
 
     loop {
-        if line_index >= parsed.len() { break; }
+        if statement_index >= parsed.len() { break; }
+
+        let mut next_statement = true;
 
         macro_rules! match_statement {
             { $($statement:ident $($expr:tt)? => $code:tt $(,)?)* } => {
-                match &parsed[line_index] {
+                match &parsed[statement_index] {
                     $(
                         match_statement!(@pat $statement $($expr)?) => {
                             $(
@@ -55,7 +57,7 @@ pub fn run(parsed: &Statements) -> RunOutput {
                                             let value = variables.get(&current_pointer).unwrap_or(&Value::Null);
                                             #[allow(clippy::redundant_closure)]
                                             #[allow(clippy::redundant_closure_call)]
-                                            if !$condition(value) { line_index += $quantity; }
+                                            if !$condition(value) { statement_index += $quantity; }
                                         }
                                     }
                                 }
@@ -103,12 +105,15 @@ pub fn run(parsed: &Statements) -> RunOutput {
                 compress_value(&mut current_pointer);
             },
             Define(expr) => {
-                variables.insert(operand!().clone(), Value::JumpAddress(line_index));
+                variables.insert(operand!().clone(), Value::SmallInt(statement_index as SmallInt + 1));
             },
             Jump(expr) => {
-                if let Some(Value::JumpAddress(index)) = variables.get(operand!()) {
-                    line_index = *index
+                match variables.get(operand!()) {
+                    Some(Value::Integer(index)) if index > &BigInt::ZERO && index < &BigInt::from(usize::MAX) => statement_index = *index.to_u64_digits().1.last().unwrap() as usize,
+                    Some(Value::SmallInt(index)) if (0..=usize::MAX as i128).contains(index) => statement_index = *index as usize,
+                    _ => {}
                 }
+                next_statement = false;
             },
             Assign(expr) => {
                 variables.insert(
@@ -344,7 +349,6 @@ pub fn run(parsed: &Statements) -> RunOutput {
                     Some(LogKind::Type) => {
                         // TODO: idk, reader and selecting what the value actually is, maybe make it a property
                         match variables.get(&current_pointer).unwrap_or(&NULL) {
-                            Value::JumpAddress(_) => "JumpAddress",
                             Value::Symbol(_) => "Symbol",
                             Value::Boolean(_) => "Boolean",
                             Value::Integer(_) => "Integer",
@@ -424,7 +428,7 @@ pub fn run(parsed: &Statements) -> RunOutput {
         }
 
         if start_operation.elapsed() > max_time.0 {
-            max_time = (start_operation.elapsed(), &parsed[line_index])
+            max_time = (start_operation.elapsed(), &parsed[statement_index])
         }
 
         if output_updated && last_flush.elapsed() > Duration::from_millis(50) {
@@ -433,7 +437,9 @@ pub fn run(parsed: &Statements) -> RunOutput {
             output_updated = false;
         }
 
-        line_index += 1;
+        if next_statement {
+            statement_index += 1;
+        }
     }
 
     w.flush().unwrap();
@@ -587,9 +593,6 @@ fn value_to_string(value: &Value, special: bool) -> String {
 
         (Value::Null, false) => "null".to_string(),
         (Value::Null, true) => "\0".to_string(),
-
-        (Value::JumpAddress(a), false) => a.to_string(),
-        (Value::JumpAddress(a), true) => format!("{:b}", a),
     }
 }
 
@@ -604,7 +607,6 @@ fn value_is_truthy(value: &Value) -> bool {
         Value::Text(s) => !s.is_empty(),
         Value::Time(_) => true,
         Value::Null => false,
-        Value::JumpAddress(_) => true
     }
 }
 

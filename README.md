@@ -52,9 +52,6 @@ false
 # Time
 µ # represents the current time if you do `<= µ`
 
-# JumpAddress
-[<] sussy # can be any value. this is as if it was doing `|< sussy <= (current_statement index)`
-
 # Null
 null
 ```
@@ -88,16 +85,21 @@ These are the main operations, they are quite important.
 
 Loops are quite important in any language, so here they are!
 
-You can define jump addresses and then jump back to them.
-The code needs to execute the definition line for it to be defined.
-You cannot jump to addresses you never defined.
+To define a jump address you can use the `[<] label` syntax, or you can set/modify the statement index yourself, for example `|< label <= 4`.
+Jump addresses are regular integers. You can do math with them like any other number.
+To jump to a jump address, you can do `[>] label`.
 
-Jump addresses are saved in the same memory where the variables are stored.
-You should use an unique name / value for loops if you don't want to accidentally overwrite them, which results into being unable to jump back.
+Note that doing `[<] label` will store the statement index AFTER the jump address declaration.
 
 ```specky
 [<] loop    # defines a jump address to the current line, with the name `loop`
 [>] loop    # jumps to the `loop` address
+```
+
+```specky
+|< address <= 3  # define the statement index (zero-indexed)
+[>] address      # jump to the statement index 3
+{%}              # this is statement index 3
 ```
 
 #### Math

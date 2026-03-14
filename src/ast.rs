@@ -10,7 +10,6 @@ pub type SmallInt = i128;
 
 #[derive(Debug, Hash, PartialEq, Eq, Clone, PartialOrd)]
 pub enum Value {
-    JumpAddress(usize),
     Symbol(String),
     Boolean(bool),
     Integer(Integer),
