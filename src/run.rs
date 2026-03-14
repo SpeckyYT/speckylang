@@ -109,11 +109,16 @@ pub fn run(parsed: &Statements) -> RunOutput {
             },
             Jump(expr) => {
                 match variables.get(operand!()) {
-                    Some(Value::Integer(index)) if index > &BigInt::ZERO && index < &BigInt::from(usize::MAX) => statement_index = *index.to_u64_digits().1.last().unwrap() as usize,
-                    Some(Value::SmallInt(index)) if (0..=usize::MAX as i128).contains(index) => statement_index = *index as usize,
-                    _ => {}
+                    Some(Value::Integer(index)) if index > &BigInt::ZERO && index < &BigInt::from(usize::MAX) => {
+                        statement_index = *index.to_u64_digits().1.first().unwrap() as usize;
+                        next_statement = false;
+                    },
+                    Some(Value::SmallInt(index)) if (0..=usize::MAX as i128).contains(index) => {
+                        statement_index = *index as usize;
+                        next_statement = false;
+                    },
+                    _ => {},
                 }
-                next_statement = false;
             },
             Assign(expr) => {
                 variables.insert(

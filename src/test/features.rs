@@ -82,3 +82,10 @@ fn jump_address_set() {
     let ran = test_run!("|< a <= 0 !! <= 5 [>] a {%}");
     assert_eq!(ran.stdout, "5\n");
 }
+
+#[test]
+fn jump_address_invalid() {
+    let ran = test_run!("[>] a |< a [>] a <= /test/ [>] a {%}");
+    assert_eq!(ran.stdout, "/test/\n");
+}
+
