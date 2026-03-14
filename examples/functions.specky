@@ -1,0 +1,39 @@
+# this is a bit of a "convoluted" example to show how functions can be written in SpeckyLang
+
+[<] func_1
+    |< func_1_return + 1
+
+    |< output_1 <= §input_1 + 3 \ 2
+[>] func_1_return
+
+[<] func_2
+    |< func_2_return + 1
+
+    |< output_2 <= §input_2 * 7
+[>] func_2_return
+
+[<] func_3
+    |< func_3_return + 1
+
+    |< output_3 <= §input_3 - 12
+[>] func_3_return
+
+|< acc <= 0
+
+|< input_1 <= 15
+[<] func_1_return [>] func_1 |< acc + §output_1 {%}
+
+|< input_2 <= 31
+[<] func_2_return [>] func_2 |< acc + §output_2 {%}
+
+|< input_3 <= 63
+[<] func_3_return [>] func_3 |< acc + §output_3 {%}
+
+|< input_2 <= 7
+[<] func_2_return [>] func_2 |< acc + §output_2 {%}
+
+|< input_3 <= 127
+[<] func_3_return [>] func_3 |< acc + §output_3 {%}
+
+|< input_1 <= 3
+[<] func_1_return [>] func_1 |< acc + §output_1 {%}
