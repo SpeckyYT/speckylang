@@ -215,6 +215,11 @@ pub fn run(parsed: &Statements) -> RunOutput {
                             .map(Value::SmallInt)
                             .unwrap_or(Value::Integer(Integer::from(left) - Integer::from(right))),
                         (Value::Float(left), Value::Float(right)) => Value::Float(left - right),
+                        (Value::Text(left), Value::Text(right)) => {
+                            let left = Integer::from_bytes_be(Sign::Plus, left.as_bytes());
+                            let right = Integer::from_bytes_be(Sign::Plus, right.as_bytes());
+                            compress_integer(left - right)
+                        },
                         _ => Value::Null,
                     }
                 });

@@ -89,3 +89,8 @@ fn jump_address_invalid() {
     assert_eq!(ran.stdout, "/test/\n");
 }
 
+#[test]
+fn subtract_strings() {
+    let ran = test_run!("<= /ab/ - /aa/ {%}");
+    assert_eq!(ran.stdout, "1\n")
+}
