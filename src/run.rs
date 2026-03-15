@@ -200,9 +200,10 @@ pub fn run(parsed: &Statements) -> RunOutput {
                             .map(Value::SmallInt)
                             .unwrap_or(Value::Integer(Integer::from(left) + Integer::from(right))),
                         (Value::Float(left), Value::Float(right)) => Value::Float(left + right),
-                        (Value::Text(left), Value::Text(right)) => Value::Text(left + &right),
-                        (Value::Text(left), Value::Integer(right)) => Value::Text(left + &right.to_string()),
-                        (Value::Text(left), Value::SmallInt(right)) => Value::Text(left + &right.to_string()),
+                        (Value::Text(left)|Value::Symbol(left), Value::Text(right)) => Value::Text(left + &right),
+                        (Value::Text(left)|Value::Symbol(left), Value::Integer(right)) => Value::Text(left + &right.to_string()),
+                        (Value::Text(left)|Value::Symbol(left), Value::SmallInt(right)) => Value::Text(left + &right.to_string()),
+                        (Value::Symbol(left), Value::Symbol(right)) => Value::Symbol(left + &right),
                         _ => Value::Null,
                     }
                 });
@@ -215,7 +216,7 @@ pub fn run(parsed: &Statements) -> RunOutput {
                             .map(Value::SmallInt)
                             .unwrap_or(Value::Integer(Integer::from(left) - Integer::from(right))),
                         (Value::Float(left), Value::Float(right)) => Value::Float(left - right),
-                        (Value::Text(left), Value::Text(right)) => {
+                        (Value::Text(left)|Value::Symbol(left), Value::Text(right)|Value::Symbol(right)) => {
                             let left = Integer::from_bytes_be(Sign::Plus, left.as_bytes());
                             let right = Integer::from_bytes_be(Sign::Plus, right.as_bytes());
                             compress_integer(left - right)
@@ -307,7 +308,7 @@ pub fn run(parsed: &Statements) -> RunOutput {
                         (Value::Integer(left), Value::Integer(right)) => Value::Boolean(left < right),
                         (Value::SmallInt(left), Value::SmallInt(right)) => Value::Boolean(left < right),
                         (Value::Float(left), Value::Float(right)) => Value::Boolean(left < right),
-                        (Value::Text(left), Value::Text(right)) => Value::Boolean(left < right),
+                        (Value::Text(left)|Value::Symbol(left), Value::Text(right)|Value::Symbol(right)) => Value::Boolean(left < right),
                         _ => Value::Null,
                     }
                 });
@@ -318,7 +319,7 @@ pub fn run(parsed: &Statements) -> RunOutput {
                         (Value::Integer(left), Value::Integer(right)) => Value::Boolean(left > right),
                         (Value::SmallInt(left), Value::SmallInt(right)) => Value::Boolean(left > right),
                         (Value::Float(left), Value::Float(right)) => Value::Boolean(left > right),
-                        (Value::Text(left), Value::Text(right)) => Value::Boolean(left > right),
+                        (Value::Text(left)|Value::Symbol(left), Value::Text(right)|Value::Symbol(right)) => Value::Boolean(left > right),
                         _ => Value::Null,
                     }
                 });
@@ -329,7 +330,7 @@ pub fn run(parsed: &Statements) -> RunOutput {
                         (Value::Integer(left), Value::Integer(right)) => Value::Boolean(left <= right),
                         (Value::SmallInt(left), Value::SmallInt(right)) => Value::Boolean(left <= right),
                         (Value::Float(left), Value::Float(right)) => Value::Boolean(left <= right),
-                        (Value::Text(left), Value::Text(right)) => Value::Boolean(left <= right),
+                        (Value::Text(left)|Value::Symbol(left), Value::Text(right)|Value::Symbol(right)) => Value::Boolean(left <= right),
                         _ => Value::Null,
                     }
                 });
@@ -340,7 +341,7 @@ pub fn run(parsed: &Statements) -> RunOutput {
                         (Value::Integer(left), Value::Integer(right)) => Value::Boolean(left >= right),
                         (Value::SmallInt(left), Value::SmallInt(right)) => Value::Boolean(left >= right),
                         (Value::Float(left), Value::Float(right)) => Value::Boolean(left >= right),
-                        (Value::Text(left), Value::Text(right)) => Value::Boolean(left >= right),
+                        (Value::Text(left)|Value::Symbol(left), Value::Text(right)|Value::Symbol(right)) => Value::Boolean(left >= right),
                         _ => Value::Null,
                     }
                 });
