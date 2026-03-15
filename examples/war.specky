@@ -1,0 +1,215 @@
+# this code has a bit of copy and paste, would be nice to make functions or something
+
+|< suit_sym <= 9824 # ♠
+|< total_cards <= 13 * 4
+|< table_size <= 4
+
+|< cn <= 1
+[<] number_characters
+    |< n <= /numberchar/ + §cn
+    |< §n <= // + §cn
+    |< cn + 1
+    |< temp <= §cn =< 10 ?
+[>] number_characters
+|< /numberchar11/ <= /J/
+|< /numberchar12/ <= /Q/
+|< /numberchar13/ <= /K/
+
+|< deck_index <= -1
+|< player_pile_index <= 0
+|< opponent_pile_index <= 0
+
+|< start_time <= µ
+|< rng_seed <= 0
+
+# setup cards and deck
+|< suit <= 0
+[<] deck_setup_suits
+    |< number <= 1
+    [<] deck_setup_numbers
+        |< card_index <= 13 * §suit + §number - 1
+        |< card_name <= /card/ + §card_index
+        |< card_suit <= /suit:/ + §card_name
+        |< §card_suit <= §suit
+        |< card_number <= /number:/ + §card_name
+        |< §card_number <= §number
+        |< deck_number <= /deck:/ + §card_index
+        |< §deck_number <= §card_index 
+
+        # change rng for good measure
+        |< current_time <= §start_time {%\<} - //
+        |< rng_seed + §current_time % 4294967296
+
+        |< deck_index + 1
+        |< number + 1
+        |< temp <= §number =< 13 ?
+    [>] deck_setup_numbers
+
+    |< suit + 1
+    |< temp <= §suit < 4 ?
+[>] deck_setup_suits
+
+# shuffle deck
+|< shuffle_index <= 0
+[<] shuffle
+    |< rng_seed * 1664525 + 1013904223 % 4294967296
+
+    |< remaining_cards <= §total_cards - §shuffle_index
+    |< card_to_swap <= §remaining_cards * §rng_seed \ 4294967296 + §shuffle_index
+
+    |< first_card <= /deck:/ + §shuffle_index
+    |< second_card <= /deck:/ + §card_to_swap
+
+    |< §first_card <=> §second_card
+
+    |< shuffle_index + 1
+    |< temp <= §shuffle_index < §total_cards ?
+[>] shuffle
+
+[<] game_loop
+    |< /Table:/ {@$\°}
+
+    |< table_index <= 0
+    |< table_amount <= 0
+    [<] table_setup
+        |< table_card <= /table:/ + §table_index
+        |< §table_card °°°° °°° °° °° °°
+            |< temp <= §deck_index >= 0 ??? ?? ?? ??
+                |< deck_card <= /deck:/ + §deck_index
+                |< §table_card <= §§deck_card
+                |< §deck_card <= null
+                |< deck_index - 1
+        |< §table_card $$ |< table_amount + 1
+
+        |< /[/ {@$\°}
+        
+        |< §table_card $$$$
+            |< numb <= §table_index + 1 {%\°}
+        °
+            {°°\}
+
+        # |< table_card $$$ $$$$ $$$$$
+        #     |< current_card_number <= §§table_card % 13 + 1
+        #     |< numberchar <= /numberchar/ + §current_card_number {%§$\} 
+        #     |< current_card_suit <= §§table_card \ 13 + §suit_sym {%$\}
+        # °
+        #     {°°\}
+        |< /]/ {@$\}
+        
+        {°°°\}
+
+        |< table_index + 1
+        |< temp <= §table_index < §table_size ?
+    [>] table_setup
+
+    |< temp <= §table_amount < 2 ?? ?
+        |< exit_game_loop + 1
+        [>] exit_game_loop
+
+    {}{}
+
+    [<] input_loop
+    |< input <= /Type a card (1-/ + §table_size + /):/ {%$\°} '
+    |< temp <= §input > 0
+    |< temp2 <= §input =< §table_size & §temp ! [>] input_loop
+    |< table_index <= §input - 1
+    |< selected_table_card <= /table:/ + §table_index
+    |< §selected_table_card ° [>] input_loop
+    |< player_card <= §§selected_table_card
+    |< §selected_table_card <= null
+
+    {}{}
+
+    |< /Your card: [/ {@$\°}
+    |< player_number <= §player_card % 13 + 1
+    |< player_number_char <= /numberchar/ + §player_number {%§$\} 
+    |< player_suit_char <= §player_card \ 13 + §suit_sym {%$\°}
+    |< /]/ {@$}
+
+    [<] opponent_choose
+    |< rng_seed * 1664525 + 1013904223 % 4294967296
+    |< opponent_index <= §rng_seed * §table_size \ 4294967296
+    |< opponent_table_card <= /table:/ + §opponent_index
+    |< §opponent_table_card ° [>] opponent_choose
+    |< opponent_card <= §§opponent_table_card
+    |< §opponent_table_card <= null
+
+    |< /Opponent card: [/ {@$\°}
+    |< opponent_number <= §opponent_card % 13 + 1
+    |< opponent_number_char <= /numberchar/ + §opponent_number {%§$\} 
+    |< opponent_suit_char <= §opponent_card \ 13 + §suit_sym {%$\°}
+    |< /]/ {@$}
+
+    |< player_seed_score    <= §player_card \ 13
+    |< player_score         <= §player_card % 13 * 4 + 3 - §player_seed_score
+    |< opponent_seed_score  <= §opponent_card \ 13
+    |< opponent_score       <= §opponent_card % 13 * 4 + 3 - §opponent_seed_score
+
+    |< player_won <= §player_score > §opponent_score
+    ?? ?? ??
+        |< winner <= /playerpile:/
+        |< winner_index <= player_pile_index
+        |< win_text <= /You won this round!/
+    !! !! !!
+        |< winner <= /opponentpile:/
+        |< winner_index <= opponent_pile_index
+        |< win_text <= /Opponent won this round!/
+
+    {%$}
+
+    |< winner_address <= §winner + §§winner_index
+    |< §winner_address <= §player_card
+    |< §winner_index + 1
+    |< winner_address <= §winner + §§winner_index
+    |< §winner_address <= §opponent_card
+    |< §winner_index + 1
+
+    {}{}{}
+
+    [<] exit_game_loop
+[>] game_loop
+
+{}{}{}{}
+
+|< player_won <= §player_pile_index > §opponent_pile_index ??
+    |< win_text <= /You won!/
+|< opponent_won <= §player_pile_index < §opponent_pile_index ??
+    |< win_text <= /Opponent won!/
+|< is_tie <= §player_pile_index = §opponent_pile_index ??
+    |< win_text <= /Tie!/
+
+|< /Your cards: (/ {@$\}
+|< pile <= §player_pile_index {%\}
+|< /)/ {@$}
+[<] draw_player_pile
+    |< player_pile_index - 1
+    |< player_pile_address <= /playerpile:/ + §player_pile_index
+    |< §player_pile_address $$ $$$$ $$$$ $$ $$$$ $$$ $$ $
+        |< current_card <= §§player_pile_address
+        |< current_card_number <= §current_card % 13 + 1
+        |< current_card_suit <= §current_card \ 13 + §suit_sym
+        |< /[/ {@$\}
+        |< current_card_number_char <= /numberchar/ + §current_card_number {%§$\}
+        |< current_card_suit_char <= §current_card_suit {%$\}
+        |< /]/ {@$\}
+        [>] draw_player_pile
+{}
+|< /Opponent cards: (/ {@$\}
+|< pile <= §opponent_pile_index {%\}
+|< /)/ {@$}
+[<] draw_player_pile
+    |< opponent_pile_index - 1
+    |< player_pile_address <= /opponentpile:/ + §opponent_pile_index
+    |< §player_pile_address $$ $$$$ $$$$ $$ $$$$ $$$ $$ $
+        |< current_card <= §§player_pile_address
+        |< current_card_number <= §current_card % 13 + 1
+        |< current_card_suit <= §current_card \ 13 + §suit_sym
+        |< /[/ {@$\}
+        |< current_card_number_char <= /numberchar/ + §current_card_number {%§$\}
+        |< current_card_suit_char <= §current_card_suit {%$\}
+        |< /]/ {@$\}
+        [>] draw_player_pile
+
+{}{}
+
+|< win_text {%$}
