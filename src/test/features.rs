@@ -1,6 +1,6 @@
 use itertools::Itertools;
 
-use crate::test_run;
+use crate::{test_run, test_run_assert};
 
 #[test]
 fn print_test() {
@@ -93,4 +93,17 @@ fn jump_address_invalid() {
 fn subtract_strings() {
     let ran = test_run!("<= /ab/ - /aa/ {%}");
     assert_eq!(ran.stdout, "1\n")
+}
+
+#[test]
+fn some_math() {
+    test_run_assert!(
+        "<= 1 + 3 {%}" => "4\n",
+        "<= 3 - 4 {%}" => "-1\n",
+        "<= 24 * 7 {%}" => "168\n",
+        "<= 168 \\ 2 {%}" => "84\n",
+        "<= 2 ^ 3 {%}" => "8\n",
+        "<= -5 % 3 {%}" => "-2\n",
+        "<= -5 %% 3 {%}" => "1\n",
+    );
 }

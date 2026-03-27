@@ -33,3 +33,13 @@ macro_rules! test_run {
         }
     };
 }
+
+#[macro_export]
+macro_rules! test_run_assert {
+    ($($input:expr => $expected:expr),*$(,)?) => {
+        $(
+            let ran = test_run!($input);
+            assert_eq!(ran.stdout, $expected, "{}", $input);
+        )*
+    };
+}
