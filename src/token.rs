@@ -27,6 +27,8 @@ pub enum Token {
     Asterisk,
     #[token("%")]
     Percent,
+    #[token("%%")]
+    PPercent,
     #[token("^")]
     Circumflex,
     #[token("><")]

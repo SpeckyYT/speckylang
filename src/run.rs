@@ -13,7 +13,9 @@ const NULL: Value = Value::Null;
 
 #[derive(Debug)]
 pub struct RunOutput {
+    #[allow(unused)]
     pub stdout: String,
+    #[allow(unused)]
     pub variables: SpeckyDataContainer<Value>,
 }
 
@@ -282,6 +284,16 @@ pub fn run(parsed: &Statements) -> RunOutput {
                         (Value::Integer(left), Value::Integer(right)) => compress_integer(left % &right),
                         (Value::SmallInt(left), Value::SmallInt(right)) => Value::SmallInt(left % right),
                         (Value::Float(left), Value::Float(right)) => Value::Float(left % right),
+                        _ => Value::Null,
+                    }
+                });
+            },
+            PPercent(expr) => {
+                left_right_operator!(|left, right| {
+                    match (left, right) {
+                        (Value::Integer(left), Value::Integer(right)) => compress_integer((left % &right + &right) % &right),
+                        (Value::SmallInt(left), Value::SmallInt(right)) => Value::SmallInt((left % right + right) % right),
+                        (Value::Float(left), Value::Float(right)) => Value::Float((left % right + right) % right),
                         _ => Value::Null,
                     }
                 });

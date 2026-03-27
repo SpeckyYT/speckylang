@@ -45,6 +45,7 @@ pub enum Statement {
     Times(Expression),
     Divide(Expression),
     Modulo(Expression),
+    PPercent(Expression),
     Exponential(Expression),
 
     Unequal(Expression),

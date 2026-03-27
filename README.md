@@ -118,6 +118,7 @@ For example, if you want to exponentiate `a` by `a`, you need to do `|< a ^ §a`
 * value # multiplies the current pointer
 \ value # divides the current pointer
 % value # sets the remainder to the current pointer (`pointer = pointer % value`)
+%% value # does `(pointer % value + value) % value`
 ^ value # exponentiates the current pointer
 ```
 

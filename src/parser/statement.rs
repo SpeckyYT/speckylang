@@ -68,6 +68,7 @@ impl<'a> Parser<'a> {
             Asterisk => Times(Expression),
             Backslash => Divide(Expression),
             Percent => Modulo(Expression),
+            PPercent => PPercent(Expression),
             Circumflex => Exponential(Expression),
         
             Unequal => Unequal(Expression),

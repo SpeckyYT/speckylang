@@ -20,7 +20,9 @@ pub enum ParsingError {
         area: CodeArea,
     },
     SyntaxError {
+        #[allow(unused)]
         expected: String,
+        #[allow(unused)]
         found: Token,
         area: CodeArea,
     },
