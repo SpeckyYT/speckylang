@@ -1,0 +1,206 @@
+|< /I tried my best to make this, but I didn't finish it yet. Note that it may not be fully functional/ {%}{}{}
+
+# constants
+|< /bombs_diff1/ <= 10
+|< /width_diff1/ <= 9
+|< /height_diff1/ <= 9
+|< /bombs_diff2/ <= 40
+|< /width_diff2/ <= 16
+|< /height_diff2/ <= 16
+|< /bombs_diff3/ <= 99
+|< /width_diff3/ <= 30
+|< /height_diff3/ <= 16
+
+|< bomb_character <= /@/
+|< esc <= 27 {%$<}
+|< clear <= §esc + /[0m/
+|< /color_number0/ <= §esc + /[38;2;192;192;192m/
+|< /color_number1/ <= §esc + /[38;2;0;0;255m/
+|< /color_number2/ <= §esc + /[38;2;0;128;0m/
+|< /color_number3/ <= §esc + /[38;2;255;0;0m/
+|< /color_number4/ <= §esc + /[38;2;0;0;128m/
+|< /color_number5/ <= §esc + /[38;2;255;0;0m/
+|< /color_number6/ <= §esc + /[38;2;0;128;128m/
+|< /color_number7/ <= §esc + /[38;2;0;0;0m/
+|< /color_number8/ <= §esc + /[38;2;128;128;128m/
+|< /color_uncovered/ <= §esc + /[48;2;128;128;128m/
+|< /color_bomb/ <= §esc + /[48;2;255;0;0m/ + §esc + /[38;2;0;0;0m/
+|< i <= 0
+[<] is_number
+    |< temp <= /is_number_/ + §i
+    |< §temp <= true
+    |< temp <= /number_/ + §i
+    |< §temp <= §i
+    |< i + 1
+    |< temp <= §i < 10 ?
+[>] is_number
+
+|< mouse_reporting_start <= §esc + /[?1000h/ {%$}
+
+|< input_explain <= /Input "3,4" to uncover or "f3,4" to flag:/
+
+[<] input
+|< /input difficulty (1-3):/ {@$°\}
+|< diff '
+|< under <= §diff =< 3
+|< over <= §diff >= 1
+|< range <= §under & §over !
+[>] input
+
+|< bombs <= /bombs_diff/ + §diff
+|< bombs <= §§bombs
+|< width <= /width_diff/ + §diff
+|< width <= §§width
+|< height <= /height_diff/ + §diff
+|< height <= §§height
+
+|< start <= µ
+|< loops <= 10000
+|< rng_seed <= 0
+
+# time-based rng
+[<] init_rng
+    |< current_time <= §start {%\<} - //
+    |< rng_seed + §current_time % 4294967296
+    |< loops - 1
+    |< temp <= §loops > 0 ?
+[>] init_rng
+|< rng_seed {%}
+{}
+
+|< remaining_bombs <= §bombs
+
+[<] bombs_setup
+    |< rng_seed * 1664525 + 1013904223 % 4294967296
+    |< x <= §rng_seed * §width \ 4294967296
+    |< rng_seed * 1664525 + 1013904223 % 4294967296
+    |< y <= §rng_seed * §height \ 4294967296
+    |< bomb_coordinate <= /bomb:/ + §x + /,/ + §y
+    |< §bomb_coordinate ° °° °°°°
+        <= true
+        |< remaining_bombs - 1
+        |< temp <= §remaining_bombs > 0 ?
+[>] bombs_setup
+
+|< x <= 0
+[<] number_generation_x
+    |< y <= 0
+    [<] number_generation_y
+        |< number_coordinate <= /number:/ + §x + /,/ + §y
+        |< current_number <= 0
+
+        |< nx <= 0
+        [<] number_grid_x
+            |< ny <= 0
+            [<] number_grid_y
+                |< bcx <= §x + §nx - 1
+                |< bcy <= §y + §ny - 1
+                |< bomb_coordinate <= /bomb:/ + §bcx + /,/ + §bcy
+                |< §bomb_coordinate ??
+                    |< current_number + 1
+                |< ny + 1
+                |< temp <= §ny < 3 ?
+            [>] number_grid_y
+            |< nx + 1
+            |< temp <= §nx < 3 ?
+        [>] number_grid_x
+
+        |< §number_coordinate <= §current_number 
+
+        |< y + 1
+        |< temp <= §y < §height ?
+    [>] number_generation_y
+    |< x + 1
+    |< temp <= §x < §width ?
+[>] number_generation_x
+
+[<] game_loop
+
+    {}
+    |< y <= 0
+    [<] draw_grid_y
+        |< x <= 0
+        [<] draw_grid_x
+            |< uncovered_coordinate <= /uncovered:/ + §x + /,/ + §y
+            |< §uncovered_coordinate !!
+                |< /color_uncovered/ {%$\°}
+            |< §uncovered_coordinate ????? ?? ?? ?? ? ????? ???? ??
+                |< bomb_coordinate <= /bomb:/ + §bcx + /,/ + §bcy
+                |< §bomb_coordinate ?? ?? ? ????? ???? ??
+                    |< /color_bomb/ {%$\}
+                    |< bomb_character {%$\}
+                !!!!! !!!! !!
+                    |< number_coordinate <= /number:/ + §x + /,/ + §y
+                    |< current_color <= /color_number/ + §§number_coordinate {%§$\}
+                    |< §number_coordinate {%\}
+
+            |< clear {%$\}
+
+            |< x + 1
+            |< temp <= §x < §width ?
+        [>] draw_grid_x
+        {}
+
+        |< y + 1
+        |< temp <= §y < §height ?
+    [>] draw_grid_y
+    {}
+
+    |< input_explain {%$°\}
+    |< input_raw '
+    |< input <= // + §input_raw
+
+    |< is_flag_input <= §input ~ 0 = /f/
+    ?? |< i <= 1
+    !! |< i <= 0
+
+    |< parsing_error <= false
+
+    |< parsed_x <= 0
+    [<] x_parsing
+        |< char <= §input ~ §i
+        |< is_null <= §char = null
+        |< is_comma <= §char = /,/
+        |< is_number <= /is_number_/ + §char
+        |< is_number <= §§is_number
+        |< is_valid <= §is_comma | §is_number | §is_null
+        |< is_invalid <= §is_valid = false ??
+            |< parsing_error <= true
+        |< is_number ??? ???
+            |< number_address <= /number_/ + §char
+            |< parsed_x * 10 + §§number_address
+        |< i + 1
+        |< is_null | §is_comma | §is_invalid !
+    [>] x_parsing
+    |< parsed_y <= 0
+    [<] y_parsing
+        |< char <= §input ~ §i
+        |< is_null <= §char = null
+        |< is_comma <= §char = /,/
+        |< is_number <= /is_number_/ + §char
+        |< is_number <= §§is_number
+        |< is_valid <= §is_comma | §is_number | §is_null
+        |< is_invalid <= §is_valid = false ??
+            |< parsing_error <= true
+        |< is_number ??? ???
+            |< number_address <= /number_/ + §char
+            |< parsed_y * 10 + §§number_address
+        |< i + 1
+        |< is_null | §is_comma | §is_invalid !
+    [>] y_parsing
+
+    |< x <= §parsed_x - 1
+    |< y <= §parsed_y - 1
+
+    |< valid_x_1 <= §x =< §width
+    |< valid_x <= §x > 0 & §valid_x_1
+    |< valid_y_1 <= §y =< §height
+    |< valid_y <= §y > 0 & §valid_y_1 
+    |< valid_coord <= §valid_x & §valid_y
+    |< skip_is_invalid <= §valid_coord = false | §parsing_error
+
+    |< uncovered_coordinate <= /uncovered:/ + §x + /,/ + §y {@\°} {%}
+    |< bomb_coordinate <= /bomb:/ + §x + /,/ + §y {@\°} {%}
+
+    |< §uncovered_coordinate <= true
+[>] game_loop
