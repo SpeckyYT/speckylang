@@ -65,8 +65,8 @@ impl<'a> Parser<'a> {
                             't' => "\t",
                             '0' => "\0",
                             '\\'=> "\\",
-                            c => return Err(ParsingError::CustomError {
-                                text: format!("Invalid escape character '{c}'"),
+                            c => return Err(ParsingError::InvalidEscapeCharacter {
+                                character: *c,
                                 area: CodeArea::from_span(span.start+i-1..span.start+i+1),
                             }),
                         });
