@@ -153,14 +153,11 @@ pub fn run(parsed: &Statements) -> RunOutput {
                             let integer: Option<usize> = match right {
                                 Value::Integer(int) => int.try_into().ok(),
                                 Value::SmallInt(int) => int.try_into().ok(),
+                                Value::Float(float) => float.floor().to_u128().and_then(|a| a.try_into().ok()),
                                 _ => return Value::Null,
                             };
-                            if let Some(int) = integer {
-                                if let Some(ch) = string.chars().nth(int) {
-                                    Value::Text(ch.to_string())
-                                } else {
-                                    Value::Null
-                                }
+                            if let Some(ch) = integer.and_then(|int| string.chars().nth(int)) {
+                                Value::Text(ch.to_string())
                             } else {
                                 Value::Null
                             }

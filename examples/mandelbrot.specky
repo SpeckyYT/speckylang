@@ -1,0 +1,41 @@
+|< real_min <= -2.0
+|< real_max <= 1.0
+|< imaginary_min <= -1.25
+|< imaginary_max <= 1.25
+|< steps <= 0.05
+
+|< max_iterations <= 30
+
+|< chars <= / .:-=+*#%@/
+|< chars_len <= 10
+
+|< imaginary <= §imaginary_min
+[<] line
+    |< real <= §real_min
+    [<] column
+        |< r <= §real
+        |< i <= §imaginary
+
+        |< iter <= §max_iterations
+        [<] mandelbrot
+            |< rs <= §r ^ 2.0
+            |< is <= §i ^ 2.0
+            |< i * §r * 2.0 + §imaginary
+            |< r <= §rs - §is + §real
+            |< iter - 1
+            |< iter_end <= §iter =< 0
+            |< complex_end <= §r >= 2.0 | §iter_end !
+        [>] mandelbrot
+
+        |< ci <= 1.0 * §iter \ §max_iterations * §chars_len
+        |< d <= §ci % 1.0
+        |< ci <= §ci - §d
+        |< char <= §chars ~ §ci {%$\}
+
+        |< real + §steps
+        |< temp <= §real =< §real_max ?
+    [>] column
+    {}
+    |< imaginary + §steps
+    |< temp <= §imaginary =< §imaginary_max ?
+[>] line
