@@ -11,27 +11,23 @@ fn bottles_of_beer() {
 
     const MAX_BOTTLES_PLURAL: &str = plural(MAX_BOTTLES);
 
-    let expected = (1..=MAX_BOTTLES).rev()
-        .map(|i| {
-            let s = plural(i);
-            let d = i - 1;
-            let sd = plural(d);
-            [
-                format!("{i} bottle{s} of beer on the wall,"),
-                format!("{i} bottle{s} of beer."),
-                "Take one down, pass it around,".to_string(),
-                format!("{d} bottle{sd} of beer on the wall,"),
-                "".to_string(),
-                "".to_string(),
-            ].join("\n")
-        })
-        .collect::<String>() + &[
-            "No bottles of beer on the wall,",
-            "No bottles of beer.",
-            "Go to the store, buy some more,",
-            &format!("{MAX_BOTTLES} bottle{MAX_BOTTLES_PLURAL} of beer on the wall."),
-            "",
-        ].join("\n");
+    let mut expected = String::with_capacity(11600);
+
+    for i in (1..=MAX_BOTTLES).rev() {
+        let s = plural(i);
+        let d = i - 1;
+        let sd = plural(d);
+
+        expected.push_str(&format!("{i} bottle{s} of beer on the wall,\n"));
+        expected.push_str(&format!("{i} bottle{s} of beer.\n"));
+        expected.push_str("Take one down, pass it around,\n");
+        expected.push_str(&format!("{d} bottle{sd} of beer on the wall,\n\n"));
+    }
+
+    expected.push_str("No bottles of beer on the wall,\n");
+    expected.push_str("No bottles of beer.\n");
+    expected.push_str("Go to the store, buy some more,\n");
+    expected.push_str(&format!("{MAX_BOTTLES} bottle{MAX_BOTTLES_PLURAL} of beer on the wall.\n"));
 
     assert_eq!(output.stdout, expected)
 }
