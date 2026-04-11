@@ -309,10 +309,26 @@ pub fn run(parsed: &Statements) -> RunOutput {
                 });
             },
             Unequal(expr) => {
-                left_right_operator!(|left, right| Value::Boolean(left != right));
+                left_right_operator!(|left, right|{
+                    match (left, right) {
+                        (Value::Integer(left), Value::Integer(right)) => Value::Boolean(left != right),
+                        (Value::SmallInt(left), Value::SmallInt(right)) => Value::Boolean(left != right),
+                        (Value::Float(left), Value::Float(right)) => Value::Boolean(left != right),
+                        (Value::Text(left)|Value::Symbol(left), Value::Text(right)|Value::Symbol(right)) => Value::Boolean(left != right),
+                        _ => Value::Boolean(true),
+                    }
+                });
             },
             Equal(expr) => {
-                left_right_operator!(|left, right| Value::Boolean(left == right));
+                left_right_operator!(|left, right|{
+                    match (left, right) {
+                        (Value::Integer(left), Value::Integer(right)) => Value::Boolean(left == right),
+                        (Value::SmallInt(left), Value::SmallInt(right)) => Value::Boolean(left == right),
+                        (Value::Float(left), Value::Float(right)) => Value::Boolean(left == right),
+                        (Value::Text(left)|Value::Symbol(left), Value::Text(right)|Value::Symbol(right)) => Value::Boolean(left == right),
+                        _ => Value::Boolean(false),
+                    }
+                });
             },
             LessThan(expr) => {
                 left_right_operator!(|left, right|{
