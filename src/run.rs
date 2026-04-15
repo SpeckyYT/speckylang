@@ -308,6 +308,7 @@ pub fn run(parsed: &Statements) -> RunOutput {
             Unequal(expr) => {
                 left_right_operator!(|left, right|{
                     match (left, right) {
+                        (Value::Boolean(left), Value::Boolean(right)) => Value::Boolean(left != right),
                         (Value::Integer(left), Value::Integer(right)) => Value::Boolean(left != right),
                         (Value::SmallInt(left), Value::SmallInt(right)) => Value::Boolean(left != right),
                         (Value::Float(left), Value::Float(right)) => Value::Boolean(left != right),
@@ -319,6 +320,7 @@ pub fn run(parsed: &Statements) -> RunOutput {
             Equal(expr) => {
                 left_right_operator!(|left, right|{
                     match (left, right) {
+                        (Value::Boolean(left), Value::Boolean(right)) => Value::Boolean(left == right),
                         (Value::Integer(left), Value::Integer(right)) => Value::Boolean(left == right),
                         (Value::SmallInt(left), Value::SmallInt(right)) => Value::Boolean(left == right),
                         (Value::Float(left), Value::Float(right)) => Value::Boolean(left == right),
