@@ -1,0 +1,72 @@
+# input
+|< /Type 3,1,2 or anything:/ {@$°\}
+|< input '
+
+# setup
+|< id <= /id:/
+
+|< i <= 0
+[<] setup_numbers
+    |< addr <= // + §i
+    |< §addr <= true
+    |< i + 1
+    |< temp <= §i < 10 ?
+[>] setup_numbers
+
+# parse
+|< parse_i <= 0
+|< parse_number <= 0
+[<] parse_char
+    |< cc <= §input ~ §parse_i
+
+    |< ccn <= §cc {%$\<}
+    |< address <= §id + §parse_number
+
+    |< §cc ??? ??
+        |< §address ° <= 0
+        * 10 + §ccn
+    
+    |< §cc °° °°
+        |< §address $$
+            |< parse_number + 1
+
+
+    |< parse_i + 1
+    |< cc $
+[>] parse_char
+
+# loop
+[<] sort
+    |< is_sorted <= true
+
+    # sort
+    |< i <= 0
+    |< next <= §id + §i
+    [<] bubblesort_iteration
+        |< i + 1
+
+        |< current <= §next
+        |< next <= §id + §i
+
+        |< swapped <= false
+        |< should_swap <= §§current > §§next ?? ?? ??
+            |< §current <=> §next
+            |< swapped <= true
+            |< is_sorted <= false
+
+        # print
+        |< swapped ?? ? ??? ?? ? ?? ? ?
+            |< printi <= 0
+            [<] print
+                |< address <= §id + §printi
+                |< §address $ $$ $
+                    {%\°}
+                    |< printi + 1
+                    [>] print
+            {}
+
+        |< §next $
+    [>] bubblesort_iteration
+
+    |< is_sorted !
+[>] sort
