@@ -7,7 +7,7 @@ use num_bigint::{BigInt, Sign};
 
 type SpeckyDataContainer<V> = AHashMap<Value, V>;
 
-use crate::ast::{Statements, Statement, Value, LogKind, Integer, Float, SmallInt};
+use crate::ast::{Float, Integer, LogKind, LogMemory, LogValue, SmallInt, Statement, Statements, Value};
 
 const NULL: Value = Value::Null;
 
@@ -377,12 +377,11 @@ pub fn run(parsed: &Statements) -> RunOutput {
             Falsy(quantity) => { condition_jump!(|value| !value_is_truthy(value), quantity); },
             Exists(quantity) => { condition_jump!(|value| value_exists(value), quantity); },
             Empty(quantity) => { condition_jump!(|value| !value_exists(value), quantity); },
-            Log { kind, reader, special, reverse, newline, space, vertical, assign } => {
+            Log { kind, reverse, newline, space, vertical, assign } => {
                 let string = match kind {
-                    Some(LogKind::Pointer)|Some(LogKind::Value) => {
-                        let reader = kind.unwrap().reader_count() + reader;
-                        let print = value_reader(&variables, &current_pointer, reader);
-                        value_to_string(print, *special)
+                    Some(LogKind::Value(LogValue { reader, pretty })) => {
+                        let print = value_reader(&variables, &current_pointer, *reader);
+                        value_to_string(print, *pretty)
                     },
                     Some(LogKind::Type) => {
                         // TODO: idk, reader and selecting what the value actually is, maybe make it a property
@@ -397,7 +396,7 @@ pub fn run(parsed: &Statements) -> RunOutput {
                             Value::Null => "Null",
                         }.to_string()
                     },
-                    Some(LogKind::Memory) => {
+                    Some(LogKind::Memory(LogMemory { sort })) => {
                         let mut variables_string = String::new();
                         variables_string += "{\n";
 
@@ -405,7 +404,7 @@ pub fn run(parsed: &Statements) -> RunOutput {
                             variables_string += &format!("\t{key:?} => {value:?}\n");
                         };
 
-                        if *special {
+                        if *sort {
                             let mut sorted_vars = variables.iter().collect::<Vec<_>>();
 
                             sorted_vars.sort_unstable_by(|(a,_), (b,_)| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));

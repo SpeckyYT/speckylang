@@ -1,4 +1,4 @@
-use crate::{ast::{self, Statement}, token::Token};
+use crate::{ast::{self, LogMemory, LogValue, Statement}, token::Token};
 
 use super::{Parser, ParseResult, error::ParsingError, error::CodeArea};
 
@@ -127,6 +127,8 @@ impl<'a> Parser<'a> {
 
             CurlyBracketOpen => {
                 let mut kind = None;
+                
+                let mut default_reader = 0;
                 let mut reader = 0;
                 let mut special = false;
                 let mut reverse = false;
@@ -138,12 +140,18 @@ impl<'a> Parser<'a> {
                 loop {
                     let token = self.next()?;
                     match token {
-                        Token::Percent => kind = Some(ast::LogKind::Value),
-                        Token::At => kind = Some(ast::LogKind::Pointer),
+                        Token::Percent => {
+                            kind = Some(ast::LogKind::Value(Default::default()));
+                            default_reader = 1;
+                        },
+                        Token::At => {
+                            kind = Some(ast::LogKind::Value(Default::default()));
+                            default_reader = 0;
+                        },
 
                         // these two have a temporarily referred token, not sure if they'll ever get changed tho
                         Token::Asterisk => kind = Some(ast::LogKind::Type),
-                        Token::Plus => kind = Some(ast::LogKind::Memory),
+                        Token::Plus => kind = Some(ast::LogKind::Memory(Default::default())),
 
                         Token::Reader => reader += 1,
                         Token::Exists => special = !special,
@@ -162,9 +170,16 @@ impl<'a> Parser<'a> {
                 }
 
                 Ok(Statement::Log {
-                    kind,
-                    reader,
-                    special,
+                    kind: kind.map(|kind| match kind {
+                        ast::LogKind::Value(_) => ast::LogKind::Value(LogValue {
+                            reader: default_reader + reader,
+                            pretty: special,
+                        }),
+                        ast::LogKind::Type => ast::LogKind::Type,
+                        ast::LogKind::Memory(_) => ast::LogKind::Memory(LogMemory {
+                            sort: special,
+                        }),
+                    }),
                     reverse,
                     newline,
                     space,

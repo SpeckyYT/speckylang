@@ -62,8 +62,6 @@ pub enum Statement {
 
     Log {
         kind: Option<LogKind>,
-        reader: usize,
-        special: bool,
         reverse: bool,
         newline: bool,
         space: usize,
@@ -76,22 +74,20 @@ pub enum Statement {
 
 #[derive(Debug, Clone, Copy)]
 pub enum LogKind {
-    Value,
-    Pointer,
+    Value(LogValue),
     Type,
-    Memory,
+    Memory(LogMemory),
 }
 
-impl LogKind {
-    pub fn reader_count(&self) -> usize {
-        match self {
-            LogKind::Pointer => 0,
-            LogKind::Value => 1,
+#[derive(Debug, Clone, Copy, Default)]
+pub struct LogValue {
+    pub reader: usize,
+    pub pretty: bool,
+}
 
-            LogKind::Memory => 0,
-            LogKind::Type => 0,
-        }
-    }
+#[derive(Debug, Clone, Copy, Default)]
+pub struct LogMemory {
+    pub sort: bool,
 }
 
 pub type Statements = Vec<Statement>;
