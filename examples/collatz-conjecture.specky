@@ -4,8 +4,6 @@
 |< max <= 0
 |< steps <= 0
 
-{%}
-
 [<] collatzConjecture
 
 |< temp <= §current_number % 2 = 0 ??
