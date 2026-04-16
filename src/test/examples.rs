@@ -1,3 +1,6 @@
+use itertools::Itertools;
+
+use crate::ast;
 use crate::test_read;
 use crate::test_run;
 
@@ -68,6 +71,29 @@ fn fizzbuzz() {
 }
 
 #[test]
+fn bubblesort() {
+    const ARRAYS: &[&[u16]] = &[
+        &[3,2,1],
+        &[64,88,2,45,51,5,6,60,98,67],
+        &[8573,6860,5769,1162,1729,4969,5851,5008,6365,4900,5722,1605],
+    ];
+    for &array in ARRAYS {
+        let mut sorted = array.to_vec();
+        sorted.sort();
+
+        assert_eq!(
+            test_run!(
+                test_read!("examples/bubblesort.specky"),
+                [
+                    ast::Statement::Assign(ast::Expression { value: ast::Value::Text(array.iter().join(" ")), reader: 0 }),
+                ]
+            ).stdout.lines().rev().find_map(|s| (!s.is_empty()).then_some(s.trim())),
+            Some(sorted.iter().join(" ").as_str())
+        )
+    }
+}
+
+#[test]
 fn brainfuck() {
     let string = test_read!("examples/brainfuck.specky");
 
@@ -75,8 +101,8 @@ fn brainfuck() {
         test_run!(
             string,
             [
-                crate::ast::Statement::Assign(crate::ast::Expression { value: crate::ast::Value::Text(instructions.to_string()), reader: 0 }),
-                crate::ast::Statement::Assign(crate::ast::Expression { value: crate::ast::Value::Boolean(debug), reader: 0 })
+                ast::Statement::Assign(ast::Expression { value: ast::Value::Text(instructions.to_string()), reader: 0 }),
+                ast::Statement::Assign(ast::Expression { value: ast::Value::Boolean(debug), reader: 0 }),
             ]
         ).stdout
     };

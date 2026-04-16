@@ -10,7 +10,7 @@ macro_rules! test_read {
 
 #[macro_export]
 macro_rules! test_run {
-    ($string:expr $(, [$($input:expr),*])?) => {
+    ($string:expr $(, [$($input:expr),* $(,)?])?) => {
         {
             let temp = &$string;
             let mut parser = crate::parser::Parser::new(temp);
