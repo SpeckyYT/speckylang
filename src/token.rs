@@ -90,6 +90,7 @@ pub enum Token {
     #[token("false")]
     False,
     #[token("µ")]
+    #[token("μ")]
     Mu,
     #[regex(r"/(?:\.|[^/])*/")]
     StringLiteral,

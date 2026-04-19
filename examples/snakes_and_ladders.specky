@@ -1,0 +1,133 @@
+|< auto_play <= false
+
+# based on https://5.imimg.com/data5/SELLER/Default/2021/2/HK/IO/BL/12304017/snakes-and-ladders-game-board.jpg
+|< /snl:1/ <= 38  # L
+|< /snl:4/ <= 14  # L
+|< /snl:9/ <= 31  # L
+|< /snl:17/ <= 7  # S
+|< /snl:21/ <= 42 # L
+|< /snl:28/ <= 84 # L
+|< /snl:51/ <= 67 # L
+|< /snl:54/ <= 34 # S
+|< /snl:62/ <= 19 # S
+|< /snl:64/ <= 60 # S
+|< /snl:72/ <= 91 # L
+|< /snl:80/ <= 99 # L
+|< /snl:87/ <= 36 # S
+|< /snl:93/ <= 73 # S
+|< /snl:95/ <= 75 # S
+|< /snl:98/ <= 79 # S
+
+|< esc <= 27 {%$<}
+|< clear <= §esc + /[0m/
+|< bot_color <= §esc + /[38;2;255;128;0m/
+|< player_color <= §esc + /[38;2;0;128;255m/
+|< both_color <= §esc + /[38;2;255;128;255m/
+
+|< start <= µ
+|< rng_seed <= 0
+
+|< player <= 0
+|< bot <= 0
+
+[<] roll_dice
+    |< new_rng <= §start {%\<} - //
+    |< rng_seed + §new_rng % 4294967296
+        * 1664525 + 1013904223 % 4294967296
+    |< roll <= §rng_seed * 6 \ 4294967296 + 1
+    |< roll_dice_return + 1
+[>] roll_dice_return
+
+[<] snakes_and_ladders
+    |< §input_player + §roll
+
+    |< temp <= §§input_player > 100 ??? ??
+        |< exceeded <= §§input_player - 100 * 2
+        |< §input_player - §exceeded
+
+    |< snl <= /snl:/ + §§input_player
+    |< snl_offset <= §§snl $$
+        |< §input_player <= §snl_offset
+
+    |< snakes_and_ladders_return + 1
+[>] snakes_and_ladders_return
+
+[<] draw
+    |< y <= 0
+    [<] line
+        |< x <= 0
+        [<] col
+            |< tile <= 9 - §y * 10 + 1
+            |< grow <= §y % 2 ??
+                |< tile + §x
+            !!!
+                |< tile + 9 - §x
+
+            |< tile_str <= // + §tile
+            |< padding <= //
+
+            |< temp <= §tile_str ~ 2 °°
+                |< padding + / /
+            |< temp <= §tile_str ~ 1 °°
+                |< padding + / /
+
+            |< player_on_tile <= §player = §tile
+            |< bot_on_tile <= §bot = §tile
+            |< both_on_tile <= §player_on_tile & §bot_on_tile
+            |< should_change_color <= §player_on_tile | §bot_on_tile ???? ???? ???? ??
+                |< bot_on_tile ??
+                    |< color <= §bot_color
+                |< player_on_tile ??
+                    |< color <= §player_color
+                |< both_on_tile ??
+                    |< color <= §both_color
+                
+                |< color {%$\}
+
+            |< padding + §tile_str {%$\}
+
+            |< should_change_color ??
+                |< clear {%$\}
+
+            |< x + 1
+            |< temp <= §x < 10 ?
+        [>] col
+
+        {}
+
+        |< y + 1
+        |< temp <= §y < 10 ?
+    [>] line
+
+    {}
+
+    |< draw_return + 1
+[>] draw_return
+
+[<] game_loop
+    |< auto_play !!!
+        |< /Press enter to roll the dice.../ {@$\} '
+    
+    [<] roll_dice_return [>] roll_dice
+    |< roll_text <= /You rolled a / + §roll + /!/ {%$}
+    |< input_player <= player [<] snakes_and_ladders_return [>] snakes_and_ladders
+
+    [<] roll_dice_return [>] roll_dice
+    |< roll_text <= /Bot rolled a / + §roll + /!/ {%$}
+    |< input_player <= bot [<] snakes_and_ladders_return [>] snakes_and_ladders
+
+    [<] draw_return [>] draw
+
+    |< tie <= §player_won & §bot_won
+    |< player_won <= §player = 100
+    |< bot_won <= §bot = 100
+
+    |< player_won ??
+        |< win_text <= /You won!/
+    |< bot_won ??
+        |< win_text <= /Bot won!/
+    |< tie ??
+        |< win_text <= /Tie!/
+
+    |< win_text $ {%$} °
+[>] game_loop
