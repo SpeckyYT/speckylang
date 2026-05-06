@@ -55,34 +55,40 @@ impl<'a> Parser<'a> {
                 let mut text = String::new();
                 let mut is_escape = false;
                 
-                let chars = slice[1..slice.len()-1].chars().collect::<Vec<char>>();
+                let content = &slice[1..slice.len()-1];
+                let mut byte_offset = 0;
 
-                for (i, char) in chars.iter().enumerate() {
+                for char in content.chars() {
+                    let char_start = span.start + 1 + byte_offset;
+                    let char_len = char.len_utf8();
+
                     if is_escape {
                         text.push_str(match char {
                             'r' => "\r",
                             'n' => "\n",
                             't' => "\t",
                             '0' => "\0",
-                            '\\'=> "\\",
+                            '\\' => "\\",
                             c => return Err(ParsingError::InvalidEscapeCharacter {
-                                character: *c,
-                                area: CodeArea::from_span(span.start+i-1..span.start+i+1),
+                                character: c,
+                                area: CodeArea::from_span(char_start - 1 .. char_start + char_len),
                             }),
                         });
-                        is_escape = false
-                    } else if char == &'\\' {
-                        is_escape = true
+                        is_escape = false;
+                    } else if char == '\\' {
+                        is_escape = true;
                     } else {
-                        text.push(*char)
+                        text.push(char);
                     }
+
+                    byte_offset += char_len;
                 }
                 
                 if is_escape {
                     return Err(ParsingError::CustomError {
-                        text: "not sure if this is reachable".to_string(),
-                        area: CodeArea::from_span(self.span()),
-                    })
+                        text: "Trailing backslash in string literal".to_string(),
+                        area: CodeArea::from_span(span.start + slice.len() - 2 .. span.start + slice.len() - 1),
+                    });
                 }
 
                 Ok(ast::Value::Text(text))
@@ -98,11 +104,14 @@ impl<'a> Parser<'a> {
                 Ok(ast::Value::Null)
             }
 
-            _ => Err(ParsingError::SyntaxError {
-                expected: "value".to_string(),
-                found: self.next()?,
-                area: CodeArea::from_span(self.span()),
-            })
+            _ => {
+                let found = self.next()?;
+                Err(ParsingError::SyntaxError {
+                    expected: "value".to_string(),
+                    found,
+                    area: CodeArea::from_span(self.span()),
+                })
+            }
         }
     }
 }
