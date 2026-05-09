@@ -1,0 +1,62 @@
+# I don't understand fractran enough to understand what is wrong
+
+|< nt <= 2
+|< nb <= 1
+|< fractions <= /17_91,78_85,19_51,23_38,29_33,77_29,95_23,77_19,1_17,11_13,13_11,15_2,1_7,55_1/
+
+|< null_string <= 0 {%$<}
+
+|< pci <= 0
+|< pfi <= 0
+|< bottom <= false
+[<] string_parser
+    |< c <= §fractions ~ §pci {$%<}
+    |< title <= /f/
+    |< bottom ??
+        |< title + /b/
+    !!
+        |< title + /t/
+    + §pfi
+    |< t <= §c = _ ??
+        |< bottom <= true
+    |< t <= §c = /,/ ?? ??
+        |< pfi + 1
+        |< bottom <= false
+    |< t <= 0 + §c $$$ $$
+        |< §title ° <= 0
+            * 10 + §c
+    |< pci + 1
+    |< c >< §null_string ?
+[>] string_parser
+
+[<] while_run
+    |< run <= false
+    |< fi <= 0
+    [<] run_over_fractions
+        |< top <= /ft/ + §fi
+        |< bottom <= /fb/ + §fi
+        |< ntop <= §§top * §nt
+        |< nbottom <= §§bottom * §nb
+        |< trunc_n <= §ntop \ §nbottom
+        |< is_integer <= §trunc_n * §nbottom = §ntop ?? ?? ?? ??
+            |< run <= true
+            |< trunc_n {%}
+            |< nt * §§top
+            |< nb * §§bottom
+        # optimize n's size
+        |< a <= §nt
+        |< b <= §nb
+        [<] gcd
+            |< b <=> a % §a
+            |< t <= §b >< 0 ?
+        [>] gcd
+        |< nt \ §a
+        |< nb \ §a
+
+        |< fi + 1
+
+        |< §top $$ $
+        |< §bottom $
+    [>] run_over_fractions
+    |< run ?
+[>] while_run
