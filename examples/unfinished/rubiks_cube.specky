@@ -1,0 +1,71 @@
+# the math isn't 100% correct, but it sort of works for some sizes
+
+#[<] input
+#    |< /Input the size of the NxNxN rubik's cube: / {@$\}
+#    |< n '
+#    |< az <= §n > 0
+#    |< in <= §n {*<} = /SmallInt/ & §az !
+#[>] input
+|< n <= 4
+
+# Formulas:
+# |< C <= 8!*3^7
+# |< E <= ((n-2) * 12)!
+# |< K <= ((n-2)^2 * 6)! / 24^6
+# |< Combinations <= C * E^(n-1) * K^((n-1)^2)
+
+[<] factorial
+    |< fr <= 1
+    |< t <= §f0 =< 1 ??? |< factorial_return + 1 [>] factorial_return
+    [<] factorial_loop
+        |< fr * §f0
+        |< f0 - 1
+        |< t <= §f0 > 0 ?
+    [>] factorial_loop
+    |< factorial_return + 1
+[>] factorial_return
+
+|< nh <= §n \ 2
+|< nhmo <= §nh - 1
+|< n_is_even <= §n % 2 = 0
+
+# C
+|< f0 <= 8 [<] factorial_return [>] factorial
+|< ctw <= 2187 # 3^7
+|< C <= §fr * §ctw
+{@°\} {%}
+
+# M
+|< f0 <= 12 [<] factorial_return [>] factorial
+|< M <= §fr * 1024 # 2^12/2/2 = 2^12 / 2^2 = 2^10
+|< n_is_even ?? |< M <= 1
+|< M {@°\} {%}
+
+# E^(n-1)
+|< f0 <= 24 [<] factorial_return [>] factorial
+|< e_exp <= §nhmo
+|< E <= §fr ^ §e_exp
+{@°\} {%}
+
+# K
+|< f0 <= 24 [<] factorial_return [>] factorial \ 191102976 # 24^6
+|< k_exp_mult <= §n_is_even ?
+    <= §nhmo
+!
+    <= §nh
+
+|< k_exp <= §nhmo * §k_exp_mult
+|< K <= §fr ^ §k_exp
+{+$}
+{@°\} {%}
+
+|< Combinations <= §C * §M * §E * §K \ 24
+
+{@°\} {%}
+# 2n-cube: C * M * E^(n-1) * K^((n-1)^2) / 24
+
+# expected:
+# 2x2x2: 3674160
+# 3x3x3: 43252003274489856000
+# 4x4x4: 7401196841564901869874093974498574336000000000
+# 5x5x5: 282870942277741856536180333107150328293127731985672134721536000000000000000
