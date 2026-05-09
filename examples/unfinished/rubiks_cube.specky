@@ -1,4 +1,7 @@
 # the math isn't 100% correct, but it sort of works for some sizes
+# Info:
+# https://youtu.be/SAtFZPtbMpI
+# https://youtu.be/CTb7RyTwoQ0
 
 #[<] input
 #    |< /Input the size of the NxNxN rubik's cube: / {@$\}
