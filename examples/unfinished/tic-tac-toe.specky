@@ -1,0 +1,45 @@
+# checking if someone won and some edge cases are missing
+
+|< /1/ <= 1
+|< /2/ <= 2
+|< /3/ <= 3
+
+|< turn <= /X/
+
+[<] parse_input
+    |< /Type 1,3 or something: / {@$\}
+    |< t '
+    |< input <= // + §t
+    |< x <= §input ~ 0
+    |< y <= §input ~ 2
+    |< xn <= §§x $$$
+    |< yn <= §§y °
+    [>] parse_input
+|< coord <= // + §y + /-/ + §x
+|< §coord $ [>] parse_input <= §turn
+|< parse_input_return + 1 [>] parse_input_return
+
+[<] draw
+    |< y <= 1
+    [<] line
+        |< x <= 1
+        [<] col
+            |< coord <= // + §y + /-/ + §x
+            |< §coord $ {%$\} ° {°\}
+
+            |< x + 1
+            |< t <= §x =< 3 ???
+            |< /|/ {@$\}
+        [>] col
+
+        {}
+
+        |< y + 1
+        |< t <= §y =< 3 ?
+    [>] line
+|< draw_return + 1 [>] draw_return
+
+[<] game_loop
+    |< t <= §turn = /X/ ?? |< turn <= /O/ !! |< turn <= /X/
+    [>] parse_input
+[>] game_loop
