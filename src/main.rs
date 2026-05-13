@@ -1,13 +1,8 @@
 use std::{fs, path::PathBuf, time::{Duration, Instant}, process};
 use clap::Parser;
 
-mod ast;
-mod token;
-mod parser;
-mod run;
-
-#[cfg(test)]
-mod test;
+use speckylang::parser::Parser as SpeckyParser;
+use speckylang::run;
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
@@ -25,7 +20,9 @@ fn main() {
     let parsed = parse(&test);
 
     match args.benchmark {
-        false => run(&parsed),
+        false => {
+            run(&parsed);
+        },
         true => {
             let mut min = Duration::MAX;
             let mut max = Duration::ZERO;
@@ -57,17 +54,13 @@ fn main() {
     };
 }
 
-fn parse(code: &str) -> Vec<ast::Statement> {
-    let mut parser = parser::Parser::new(code);
+fn parse(code: &str) -> Vec<speckylang::Statement> {
+    let mut parser = SpeckyParser::new(code);
     match parser.parse_statements() {
         Ok(statements) => statements,
         Err(error) => {
-            parser::error::print_error(code, error);
+            speckylang::parser::error::print_error(code, error);
             process::exit(1)
         }
     }
-}
-
-fn run(parsed: &Vec<ast::Statement>) {
-    run::run(parsed);
 }
