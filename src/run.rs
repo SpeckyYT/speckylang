@@ -534,7 +534,7 @@ fn string_to_value(string: &str) -> Value {
         }
     }
 
-    return match string {
+    match string {
         "true"|"on"|"yes" => Value::Boolean(true),
         "false"|"off"|"no" => Value::Boolean(false),
         "null" => Value::Null,
@@ -542,7 +542,7 @@ fn string_to_value(string: &str) -> Value {
         string if string.chars().all(|c| c.is_ascii_alphanumeric() || c == '_') =>
             Value::Symbol(string.to_string()),
         string => Value::Text(string.to_string()),
-    };
+    }
 }
 
 fn value_reader<'a>(memory: &'a SpeckyDataContainer<Value>, value: &'a Value, reader: usize) -> &'a Value {
@@ -564,14 +564,12 @@ fn value_reader<'a>(memory: &'a SpeckyDataContainer<Value>, value: &'a Value, re
                 }
             },
             Value::Integer(int) => {
-                let small_form = int.try_into()
-                .map(Value::SmallInt);
-
-                if small_form.is_ok() && memory.contains_key(small_form.as_ref().unwrap()) {
-                    temp_value = small_form.unwrap();
-                    &temp_value
-                } else {
-                    current_value
+                match int.try_into().map(Value::SmallInt) {
+                    Ok(small_form) if memory.contains_key(&small_form)  => {
+                        temp_value = small_form;
+                        &temp_value
+                    },
+                    _ => current_value
                 }
             },
             other => other,
