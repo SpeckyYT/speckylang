@@ -43,7 +43,7 @@ impl<'a> Parser<'a> {
         self.clone().next().is_ok()
     }
     #[allow(dead_code)]
-    pub fn span(&self) -> Range<usize> {  self.lexer.span() }
+    pub fn span(&self) -> Range<usize> { self.lexer.span() }
     pub fn slice(&self) -> &str { self.lexer.slice() }
     fn peek(&self) -> Option<Token> {
         let mut lexer = self.lexer.clone();

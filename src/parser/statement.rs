@@ -88,41 +88,39 @@ impl<'a> Parser<'a> {
             #
 
             SquareBracketOpen => {
-                // Define => Define(Expression),
-                // Jump => Jump(Expression),
-
-                let mut kind = None;
-
+                let start_span = self.span();
                 enum JumpKind {
                     Define,
                     Jump,
                 }
-
-                loop {
+                let mut kind = None;
+                let kind = loop {
                     let token = self.next()?;
                     match token {
                         Token::LessThan => kind = Some(JumpKind::Define),   // <
                         Token::GreaterThan => kind = Some(JumpKind::Jump),  // >
-                        Token::SquareBracketClose => break,
+                        Token::SquareBracketClose => {
+                            match kind {
+                                Some(kind) => break kind,
+                                None => return Err(ParsingError::SyntaxError {
+                                    expected: "> or < inside of []".to_string(),
+                                    found: token,
+                                    area: CodeArea::from_span(start_span.start..self.span().end),
+                                })
+                            }
+                        },
                         _ => return Err(ParsingError::SyntaxError {
-                            expected: "jump option".to_string(),
+                            expected: "> or <".to_string(),
                             found: token,
                             area: CodeArea::from_span(self.span()),
-                        })
+                        }),
                     }
-                }
-
+                };
                 let expression = self.parse_expression()?;
-
-                match kind {
-                    Some(JumpKind::Define) => Ok(Statement::Define(expression)),
-                    Some(JumpKind::Jump) => Ok(Statement::Jump(expression)),
-                    None => Err(ParsingError::SyntaxError {
-                        expected: "`>` or `<` inside of the []".to_string(),
-                        found: Token::Mu,
-                        area: CodeArea::from_span(self.span()),
-                    })
-                }
+                Ok(match kind {
+                    JumpKind::Define => Statement::Define(expression),
+                    JumpKind::Jump => Statement::Jump(expression),
+                })
             },
 
             CurlyBracketOpen => {
