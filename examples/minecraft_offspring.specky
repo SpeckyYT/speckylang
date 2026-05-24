@@ -1,0 +1,7 @@
+|< limit <= 500
+|< animals <= 2
+
+[<] loop
+    |< offspring <= §animals \ 2
+    |< animals {%} + §offspring
+    |< limit - 1 ? [>] loop

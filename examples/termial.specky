@@ -1,0 +1,11 @@
+|< /Insert number:/ {@$°\}
+|< number '
+
+|< sum <= 0
+
+[<] loop
+    |< sum + §number
+    |< number - 1
+    |< temp <= §number > 0 ? [>] loop
+
+|< sum {%}
