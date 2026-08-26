@@ -24,3 +24,6 @@ cli = ["clap"]
 [[bin]]
 name = "speckylang"
 required-features = ["cli"]
+
+[lib]
+crate-type = ["rlib", "staticlib"]

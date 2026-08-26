@@ -207,6 +207,27 @@ $   # prints the value in a special/alterate way
 
 ### For other examples, check the `examples/` folder
 
+## Compilation
+
+SpeckyLang can emit LLVM IR or build a native executable through LLVM/Clang. The
+compiled entry point uses the same runtime as the interpreter, so existing
+programs and examples keep their behavior.
+
+```text
+# Print LLVM IR
+cargo run -- examples/factorial.specky --emit-llvm
+
+# Write LLVM IR to a file
+cargo run -- examples/factorial.specky --emit-llvm -o factorial.ll
+
+# Build a native executable (requires cargo and clang)
+cargo run -- examples/factorial.specky --compile -o factorial
+```
+
+The `--compile` mode builds the SpeckyLang runtime as a static library, embeds the
+source in an LLVM module, and links both with Clang. Install an LLVM toolchain
+with `clang` on `PATH` before using that mode.
+
 ## Where can I join the SpeckyLang religion?
 
 [Here](https://discord.gg/4EecFku).

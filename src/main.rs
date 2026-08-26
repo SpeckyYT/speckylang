@@ -1,8 +1,11 @@
 use std::{fs, path::PathBuf, time::{Duration, Instant}, process};
 use clap::Parser;
 
+use speckylang::compiler::emit_llvm;
 use speckylang::parser::Parser as SpeckyParser;
 use speckylang::run;
+
+mod compile;
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
@@ -10,12 +13,34 @@ struct Args {
     file: PathBuf,
     #[arg(short, long)]
     benchmark: bool,
+    /// Emit LLVM IR instead of running the program.
+    #[arg(long, conflicts_with_all = ["benchmark", "compile"])]
+    emit_llvm: bool,
+    /// Build a native executable using LLVM/Clang.
+    #[arg(short = 'c', long, conflicts_with_all = ["benchmark", "emit_llvm"])]
+    compile: bool,
+    #[arg(short, long)]
+    output: Option<PathBuf>,
 }
 
 fn main() {
     let args = Args::parse();
 
     let test = fs::read_to_string(args.file).unwrap();
+
+    if args.emit_llvm {
+        let ir = emit_llvm(&test);
+        match args.output {
+            Some(path) => fs::write(path, ir).unwrap(),
+            None => print!("{ir}"),
+        }
+        return;
+    }
+
+    if args.compile {
+        compile::compile(&test, args.output.as_deref());
+        return;
+    }
 
     let parsed = parse(&test);
 
