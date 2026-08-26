@@ -230,4 +230,4 @@ with `clang` on `PATH` before using that mode.
 
 ## Where can I join the SpeckyLang religion?
 
-[Here](https://discord.gg/4EecFku).
+[Specky Projects Discord Server](https://discord.gg/4EecFku).

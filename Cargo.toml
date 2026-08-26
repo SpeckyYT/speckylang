@@ -9,10 +9,10 @@ edition = "2021"
 # Library dependencies
 ahash = "0.8.12"
 ariadne = "0.6.0"
-itertools = "0.14.0"
+itertools = "0.15.0"
 logos = "0.16.1"
 num-bigfloat = { git = "https://github.com/SpeckyYT/num-bigfloat", version = "1.7.2" }
-num-bigint = "0.4.6"
+num-bigint = "0.5.1"
 
 # Binary dependencies
 clap = { version = "4.6.1", features = ["derive"], optional = true }

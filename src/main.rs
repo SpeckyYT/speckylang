@@ -1,4 +1,4 @@
-use std::{fs, path::PathBuf, time::{Duration, Instant}, process};
+use std::{fs, path::PathBuf, process, time::{Duration, Instant}};
 use clap::Parser;
 
 use speckylang::compiler::emit_llvm;
@@ -26,10 +26,10 @@ struct Args {
 fn main() {
     let args = Args::parse();
 
-    let test = fs::read_to_string(args.file).unwrap();
+    let code = fs::read_to_string(&args.file).unwrap();
 
     if args.emit_llvm {
-        let ir = emit_llvm(&test);
+        let ir = emit_llvm(&code);
         match args.output {
             Some(path) => fs::write(path, ir).unwrap(),
             None => print!("{ir}"),
@@ -38,11 +38,11 @@ fn main() {
     }
 
     if args.compile {
-        compile::compile(&test, args.output.as_deref());
+        compile::compile(&code, args.output.as_deref());
         return;
     }
 
-    let parsed = parse(&test);
+    let parsed = parse(&code);
 
     match args.benchmark {
         false => {
