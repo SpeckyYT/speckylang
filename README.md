@@ -207,6 +207,20 @@ $   # prints the value in a special/alterate way
 
 ### For other examples, check the `examples/` folder
 
+## VS Code syntax highlighting
+
+The repository includes a small VS Code extension for `.specky` files in
+[`editors/vscode`](editors/vscode). To build and install it locally:
+
+```text
+cd editors/vscode
+npx --yes @vscode/vsce package
+code --install-extension specky-language-support-0.1.0.vsix
+```
+
+The extension provides syntax highlighting, comments, bracket matching, and
+slash-delimited string support. It does not require a language server.
+
 ## Compilation
 
 SpeckyLang can emit LLVM IR or build a native executable through LLVM/Clang. The

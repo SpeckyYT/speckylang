@@ -1,0 +1,31 @@
+{
+  "name": "specky-language-support",
+  "displayName": "SpeckyLang Language Support",
+  "description": "Syntax highlighting for SpeckyLang files.",
+  "version": "0.1.0",
+  "publisher": "specky-projects",
+  "license": "MIT",
+  "engines": {
+    "vscode": ">=1.85.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "specky",
+        "aliases": ["SpeckyLang", "specky"],
+        "extensions": [".specky"],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "specky",
+        "scopeName": "source.specky",
+        "path": "./syntaxes/specky.tmLanguage.json"
+      }
+    ]
+  }
+}
