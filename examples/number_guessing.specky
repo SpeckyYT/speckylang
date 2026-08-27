@@ -1,8 +1,12 @@
 |< start <= µ
 
+|< max_number <= 10000
+
 [<] back
 
-|< guess <= /guess the number (1-100): / {%$\} '
+|< guess <= /guess the number (1-/ {%$\}
+|< max_number {%\}
+|< guess <= /): / {%$\} '
 
 # rng based on when the program started
 |< magic °° °° ° °°°°° °° °°° ° °°°
@@ -13,7 +17,7 @@
         |< magic + §current_time
         |< iter - 1 ?
     [>] rng_main
-    |< magic % 100 + 1
+    |< magic % §max_number + 1
 
 |< /the number is bigger/ <= §magic > §guess ? {@$}
 |< /the number is smaller/ <= §magic < §guess ? {@$}

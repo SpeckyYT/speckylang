@@ -14,7 +14,8 @@
 |< bmi <= §weight \ §height_squared
 |< /your bmi is / {@$\} |< bmi {%$}
 
-|< /you are/ <= /severely obese/
+|< /you are/ <= /discord mod/
+|< temp <= §bmi =< 50.0 ?? |< /you are/ <= /severely obese/
 |< temp <= §bmi =< 40.0 ?? |< /you are/ <= /obese/
 |< temp <= §bmi =< 30.0 ?? |< /you are/ <= /overweight/
 |< temp <= §bmi =< 24.0 ?? |< /you are/ <= /healthy/

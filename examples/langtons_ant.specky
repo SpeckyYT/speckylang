@@ -11,6 +11,7 @@
 |< down <= 0
 
 |< iterations <= 0
+|< draw_every_n_iterations <= 100
 
 [<] loop
     |< iterations + 1
@@ -38,7 +39,7 @@
     |< temp <= §up > §y ?? |< up <= §y
     |< temp <= §down < §y ?? |< down <= §y
 
-    # |< temp <= §iterations % 1000 ? [>] skip_drawing
+    # |< temp <= §iterations % §draw_every_n_iterations ? [>] skip_drawing
 
     # draw debug info
     |< iterations {@°\} {%}
