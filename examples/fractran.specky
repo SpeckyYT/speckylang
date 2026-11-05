@@ -1,0 +1,42 @@
+|< accumulator <= 2
+|< fractions <= /17÷91,78÷85,19÷51,23÷38,29÷33,77÷29,95÷23,77÷19,1÷17,11÷13,13÷11,15÷2,1÷7,55÷1/
+
+|< null_string <= 0 {%$<}
+
+|< pci <= 0
+|< pfi <= 0
+|< bottom <= false
+[<] string_parser
+    |< c <= §fractions ~ §pci {$%<}
+    |< title <= /f/
+    |< bottom ??
+        |< title + /b/
+    !!
+        |< title + /t/
+    + §pfi
+    |< t <= §c = /÷/ ??
+        |< bottom <= true
+    |< t <= §c = /,/ ?? ??
+        |< pfi + 1
+        |< bottom <= false
+    |< t <= 0 + §c $$$ $$
+        |< §title ° <= 0
+            * 10 + §c
+    |< pci + 1
+    |< c >< §null_string ?
+[>] string_parser
+
+[<] program_loop
+    |< loop <= false
+    |< fi <= 0
+    [<] run_over_fractions
+        |< bottom <= /fb/ + §fi
+        |< §temp <= §accumulator % §§bottom = 0 ??? ??? ? ?
+            |< top <= /ft/ + §fi
+            |< accumulator \ §§bottom * §§top
+            {%}
+            [>] program_loop
+        |< fi + 1
+    [>] run_over_fractions
+    |< loop !
+[>] program_loop
