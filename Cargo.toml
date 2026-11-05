@@ -15,7 +15,7 @@ num-bigfloat = { git = "https://github.com/SpeckyYT/num-bigfloat", version = "1.
 num-bigint = "0.5.1"
 
 # Binary dependencies
-clap = { version = "4.6.1", features = ["derive"], optional = true }
+clap = { version = "4.6.7", features = ["derive"], optional = true }
 
 [features]
 default = ["cli"]
