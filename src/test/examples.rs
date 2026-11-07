@@ -97,15 +97,16 @@ fn bubblesort() {
 fn brainfuck() {
     let string = test_read!("examples/brainfuck.specky");
 
-    let run = |instructions: &str, debug: bool| {
+    let run_full = |instructions: &str, debug: bool| {
         test_run!(
             string,
             [
                 ast::Statement::Assign(ast::Expression { value: ast::Value::Text(instructions.to_string()), reader: 0 }),
                 ast::Statement::Assign(ast::Expression { value: ast::Value::Boolean(debug), reader: 0 }),
             ]
-        ).stdout
+        )
     };
+    let run = |instructions: &str, debug: bool| run_full(instructions, debug).stdout;
 
     // https://github.com/saulpw/brainfuck/blob/master/tests
     assert_eq!(
@@ -126,4 +127,19 @@ fn brainfuck() {
         QUINE,
     );
     */
+}
+
+
+#[test]
+fn quine() {
+    const QUINES: &[&str] = &[
+        "examples/quine/specky_1.specky",
+        "examples/quine/llm_1.specky",
+        "examples/quine/llm_2.specky",
+    ];
+    for quine in QUINES {
+        let quine_content = test_read!(quine).replace("\r\n", "\n");
+        let quine_output = test_run!(&quine_content).stdout;
+        assert_eq!(quine_content, quine_output);
+    }
 }

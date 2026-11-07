@@ -1,0 +1,55 @@
+|< s <=
+/# |< s <=
+|< q <= §s
+|< temp <= §q
+|< temp ~ 2
+|< output <= §temp
+|< temp <= §q
+|< temp ~ 3
+|< output + §temp
+|< temp <= §q
+|< temp ~ 4
+|< output + §temp
+|< temp <= §q
+|< temp ~ 5
+|< output + §temp
+|< temp <= §q
+|< temp ~ 6
+|< output + §temp
+|< temp <= §q
+|< temp ~ 7
+|< output + §temp
+|< temp <= §q
+|< temp ~ 8
+|< output + §temp
+|< output {%$}
+|< q {%}
+|< q {%$}
+# Made by Copilot with GPT-6 Luna/
+# |< s <=
+|< q <= §s
+|< temp <= §q
+|< temp ~ 2
+|< output <= §temp
+|< temp <= §q
+|< temp ~ 3
+|< output + §temp
+|< temp <= §q
+|< temp ~ 4
+|< output + §temp
+|< temp <= §q
+|< temp ~ 5
+|< output + §temp
+|< temp <= §q
+|< temp ~ 6
+|< output + §temp
+|< temp <= §q
+|< temp ~ 7
+|< output + §temp
+|< temp <= §q
+|< temp ~ 8
+|< output + §temp
+|< output {%$}
+|< q {%}
+|< q {%$}
+# Made by Copilot with GPT-6 Luna
