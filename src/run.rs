@@ -313,6 +313,7 @@ pub fn run(parsed: &Statements) -> RunOutput {
                         (Value::SmallInt(left), Value::SmallInt(right)) => Value::Boolean(left != right),
                         (Value::Float(left), Value::Float(right)) => Value::Boolean(left != right),
                         (Value::Text(left)|Value::Symbol(left), Value::Text(right)|Value::Symbol(right)) => Value::Boolean(left != right),
+                        (Value::Null, Value::Null) => Value::Boolean(false),
                         _ => Value::Boolean(true),
                     }
                 });
@@ -325,6 +326,7 @@ pub fn run(parsed: &Statements) -> RunOutput {
                         (Value::SmallInt(left), Value::SmallInt(right)) => Value::Boolean(left == right),
                         (Value::Float(left), Value::Float(right)) => Value::Boolean(left == right),
                         (Value::Text(left)|Value::Symbol(left), Value::Text(right)|Value::Symbol(right)) => Value::Boolean(left == right),
+                        (Value::Null, Value::Null) => Value::Boolean(true),
                         _ => Value::Boolean(false),
                     }
                 });
