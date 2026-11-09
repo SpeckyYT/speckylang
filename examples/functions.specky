@@ -1,39 +1,53 @@
-# this is a bit of a "convoluted" example to show how functions can be written in SpeckyLang
+# This is a slightly comprehensive example to show how functions can be written in SpeckyLang
 
-[<] func_1
-    |< func_1_return + 1
+# Prints "variable_name: variable_content"
+[<] pretty_print
+    |< print_input {@§\}
+    |< /:/ {@$\°}
+    |< print_input {%§}
+    
+    # doing `[<] label` sets the "label" to the index of the statement
+    # so if you do `[<] label1 [>] label2` and you increment the "label1" by 1 inside the "label2"
+    # it will allow you to jump back to "label1" and skip "label2" so that it doesn't create an infinite loop
+    |< pretty_print_return + 1
+[>] pretty_print_return
 
-    |< output_1 <= §input_1 + 3 \ 2
-[>] func_1_return
+# Checks if input argument is based
+[<] is_value_based
+    |< based_output <= false
+    |< temp <= §based_input = /based/ ?? |< based_output <= true
+    |< temp <= §based_input = 69 ?? |< based_output <= true
+    |< temp <= §based_input = true ?? |< based_output <= true
+    |< temp <= §based_input °° |< based_output <= true # null is really based
 
-[<] func_2
-    |< func_2_return + 1
+    |< is_value_based_return + 1
+[>] is_value_based_return
 
-    |< output_2 <= §input_2 * 7
-[>] func_2_return
+|< rng <= 135468 # random initial seed
+|< rng_mod <= 2^32
+[<] random_number
+    |< rng * 69069 + 1 % §rng_mod
 
-[<] func_3
-    |< func_3_return + 1
+    |< random_number_return + 1
+[>] random_number_return
 
-    |< output_3 <= §input_3 - 12
-[>] func_3_return
+{}{}{}{}
 
-|< acc <= 0
+# Run is_value_based function 
+|< based_input <= 69
+[<] is_value_based_return [>] is_value_based
 
-|< input_1 <= 15
-[<] func_1_return [>] func_1 |< acc + §output_1 {%}
+# Get the output of the is_value_based function, and input it into the pretty_print function
+|< print_input <= based_output
+[<] pretty_print_return [>] pretty_print
 
-|< input_2 <= 31
-[<] func_2_return [>] func_2 |< acc + §output_2 {%}
+# Setup loop, run the random_number 10 times to update the rng value and print using pretty_print function
+|< rng_iterations <= 10
+[<] rng_loop
+    [<] random_number_return [>] random_number
 
-|< input_3 <= 63
-[<] func_3_return [>] func_3 |< acc + §output_3 {%}
+    |< print_input <= rng
+    [<] pretty_print_return [>] pretty_print
 
-|< input_2 <= 7
-[<] func_2_return [>] func_2 |< acc + §output_2 {%}
-
-|< input_3 <= 127
-[<] func_3_return [>] func_3 |< acc + §output_3 {%}
-
-|< input_1 <= 3
-[<] func_1_return [>] func_1 |< acc + §output_1 {%}
+    |< rng_iterations - 1 ?
+[>] rng_loop
