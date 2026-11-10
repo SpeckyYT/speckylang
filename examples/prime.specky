@@ -1,25 +1,39 @@
-|< current <= 10000
+|< current <= 100000
+
+[<] is_prime
+    |< is_prime_return + 1
+
+    |< temp <= §n < 2 ??? |< is_prime_output <= false [>] is_prime_return
+    |< temp <= §n =< 3 ??? |< is_prime_output <= true [>] is_prime_return
+
+    |< is_prime_output <= false
+    |< temp <= §n % 2 = 0 ? [>] is_prime_return
+    |< temp <= §n % 3 = 0 ? [>] is_prime_return
+
+    |< i <= 5
+    |< w <= 2
+    [<] is_prime_loop
+        |< temp <= §i * §i =< §n ?????? ?? ??? ?
+            |< temp <= §n % §i =< 0 ? [>] is_prime_return
+        |< i + §w
+        |< w * -1 + 6 # |< w <= 6 - w
+    [>] is_prime_loop
+
+    |< is_prime_output <= true
+[>] is_prime_return
 
 [<] main
-{%\}
-|< start <= µ
-|< number <= §current
+    |< start <= µ
+    
+    |< n <= §current {%\}
+    [<] is_prime_return [>] is_prime
 
-|< index <= §number \ 2 + 2
+    |< is_prime_output
+    ? <= / yes, it's prime /
+    ! <= / no, it's not prime /
+    {%$\}
 
-[<] jump
-|< index - 1
-|< temp <= §number % §index
-? [>] jump
+    |< start {%}
 
-|< index > 1
-
-? <= / no, it's not prime /
-! <= / yes, it's prime /
-
-{%$\}
-|< start {%}
-
-|< current - 1
-?
+    |< current - 1 ?
 [>] main
